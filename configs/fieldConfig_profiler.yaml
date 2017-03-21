@@ -1,0 +1,47 @@
+
+
+#dir configs
+pickle_dir: /Users/j9/Desktop/metadata-mgmt-tool/pickled/
+log_dir: /Users/j9/Desktop/metadata-mgmt-tool/logs/
+config_dir: /Users/j9/Desktop/metadata-mgmt-tool/configs/
+pickle_data_dir: /Users/j9/Desktop/metadata-mgmt-tool/pickled/datasets/
+wkbk_uploads_dir: /Users/j9/Desktop/metadata-mgmt-tool/wkbk_uploads/
+
+
+#other yaml configs
+socrata_client_config_fname: socrata_config.yaml
+metadataset_config: metadatasets.yaml
+email_config_file: email_config.yaml
+
+
+#file names
+exception_logfile: push_public_v_of_master_dd.txt
+output_json_fn: public_v_of_master_dd.json
+
+
+#socrata specific configs
+row_id_field: row_id
+src_records_cnt_field: SrcRecordsCnt
+dataset_records_cnt_field: DatasetRecordsCnt
+fourXFour: fourXFour
+isLoaded: isLoaded
+datasets_to_load_fn: datasets_to_load.csv
+dataset_name_field: Socrata Dataset Name
+dataset_src_dir_field:  Dataset_Source_Dir
+dataset_src_fn_field: Dataset Source Filename
+base_url: data.sfgov.org
+job_name: Profile Dataset Fields
+
+#other stuff
+json_key: updt_fields
+app_name: Profile Data Fields
+base_url: https://data.sfgov.org/resource/
+
+dd:
+  master_dd:
+    fbf: 8zp7-ik63
+  field_type:
+    fbf: 8efc-aram
+  ds_profiles:
+    fbf: w6q6-i3uv
+
