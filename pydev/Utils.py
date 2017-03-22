@@ -240,6 +240,11 @@ class WkbkUtils:
         return df
       return dfSht
 
+class ListUtils:
+    @staticmethod
+    def makeChunks( lst, chunkSize,):
+        return [ lst[x:x+ chunkSize] for x in xrange(0, len(lst), chunkSize)]
+
 
 if __name__ == "__main__":
     main()

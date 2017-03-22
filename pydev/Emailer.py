@@ -79,8 +79,8 @@ class Emailer():
         #normal emails, no attachment
         server = smtplib.SMTP(self._server, self._server_port)
         ##comment these lines out when using the sfgov email server
-        server.starttls()
-        server.login(fromaddr, self._password)
+        #server.starttls()
+        #server.login(fromaddr, self._password)
         ######
         text = msg.as_string()
         server.sendmail(fromaddr, toaddr, text)

@@ -15,11 +15,11 @@ class ProfileDatasets:
   @staticmethod
   def getCurrentDatasetProfiles(sQobj, base_url, fbf):
     all_datasets = {}
-    qry = '''%s%s.json?$query=SELECT datasetid, last_updt_dt_data ''' % (base_url, fbf)
+    qry = '''%s%s.json?$query=SELECT datasetid, last_updt_dt ''' % (base_url, fbf)
     dictList =  PandasUtils.resultsToDictList(sQobj, qry)
     if dictList:
       for item in dictList:
-        all_datasets[ item['datasetid'] ] = item['last_updt_dt_data']
+        all_datasets[ item['datasetid'] ] = item['last_updt_dt']
     return all_datasets
 
   @staticmethod
@@ -63,7 +63,7 @@ class ProfileDatasets:
       qry = qry_num_fields + "'" + ft.lower()  +"'" + ' GROUP BY field_type'
       dataset_stats[label] = ProfileFields.getResults(sQobj, qry)
     dataset_stats['record_count'] = ProfileFields.getTotal(sQobj, dataset['base_url'], dataset['nbeid'])
-    dataset_stats['last_updt_dt_data'] = DateUtils.get_current_timestamp()
+    dataset_stats['last_updt_dt'] = DateUtils.get_current_timestamp()
     return dataset_stats
 
   @staticmethod
@@ -74,25 +74,36 @@ class ProfileDatasets:
     dataset_stats['dupe_record_percent'] = ProfileDatasets.percentDuplicate(dataset_stats)
     return  dataset_stats
 
-#season of the witch
+
   @staticmethod
   def buildInsertDatasetProfiles(sQobj, scrud, configItems, datasets, ds_profiles, field_types):
-
+    src_records = 0
+    inserted_records = 0
+    dt_fmt = '%Y-%m-%dT%H:%M:%S'
     mmdd_fbf = configItems['dd']['master_dd']['fbf']
     ds_profiles_fbf =  configItems['dd']['ds_profiles']['fbf']
     base_url =  configItems['baseUrl']
     ds_profile_keys = ds_profiles.keys()
-    dataset_info = {}
-    for dataset in datasets[10:11]:
-      dataset_stats = {}
-      if dataset['datasetid'] in ds_profile_keys:
-        dt_fmt = '%Y-%m-%dT%H:%M:%S'
-        if ( not ( DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt ))):
-          dataset_stats = getDatasetStats(sQobj,dataset, mmdd_fbf, field_types)
-      else:
-        dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types)
-      if len(dataset_stats.keys()) > 1 :
-        dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':len([dataset_stats]), 'DatasetRecordsCnt':0, 'fourXFour': ds_profiles_fbf, 'row_id': configItems['row_id']}
-        dataset_info = scrud.postDataToSocrata(dataset_info, [dataset_stats])
+    datasets_chunks = ListUtils.makeChunks(datasets, 5)
+    dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': ds_profiles_fbf, 'row_id': configItems['row_id']}
+    for chunk in datasets_chunks:
+      datasets_stats = []
+      for dataset in chunk:
+        dataset_stats = {}
+        if dataset['datasetid'] in ds_profile_keys:
+          if ( not ( DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt ))):
+            dataset_stats = getDatasetStats(sQobj,dataset, mmdd_fbf, field_types)
+        else:
+          dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types)
+        if len(dataset_stats.keys()) > 1 :
+          datasets_stats.append(dataset_stats)
+      if len(datasets_stats) > 1:
+        dataset_info['DatasetRecordsCnt'] = 0
+        dataset_info['SrcRecordsCnt'] = len(datasets_stats)
+        dataset_info = scrud.postDataToSocrata(dataset_info, datasets_stats)
         print dataset_info
+        src_records = src_records + dataset_info['SrcRecordsCnt']
+        inserted_records = inserted_records + dataset_info['DatasetRecordsCnt']
+    dataset_info['SrcRecordsCnt'] = src_records
+    dataset_info['DatasetRecordsCnt'] = inserted_records
     return dataset_info

@@ -68,8 +68,9 @@ def main():
   datasets = ProfileDatasets.getBaseDatasets(sQobj, base_url,  mmdd_fbf)
   ds_profiles = ProfileDatasets.getCurrentDatasetProfiles(sQobj, base_url, ds_profiles_fbf )
   field_types = ProfileDatasets.getFieldTypes(sQobj, base_url, field_type_fbf)
-  datasets_stats =  ProfileDatasets.buildInsertDatasetProfiles(sQobj, scrud, configItems, datasets, ds_profiles,  field_types)
-  if len(datasets_stats)> 1:
+  dataset_info =  ProfileDatasets.buildInsertDatasetProfiles(sQobj, scrud, configItems, datasets, ds_profiles,  field_types)
+  print dataset_info
+  if dataset_info['DatasetRecordsCnt'] > 1:
     dsse = JobStatusEmailerComposer(configItems, logger)
     dsse.sendJobStatusEmail([dataset_info])
   else:
