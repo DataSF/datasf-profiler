@@ -8,7 +8,7 @@ import pandas as pd
 from PandasUtils import *
 from Utils import *
 from DictUtils import *
-from Queries import *
+from ProfileFields import *
 
 class ProfileDatasets:
 
@@ -43,7 +43,11 @@ class ProfileDatasets:
     results = sQobj.getQryFull(qry)
     results = DictUtils.consolidateDictList(results, 'api_key')
     fields = ', '.join(results)
-    qry2 = '''%s%s.json?$query=SELECT %s, COUNT(*) AS value GROUP BY %s HAVING COUNT(*) > 1 |>  SELECT SUM(value) AS value  ''' % (dataset['base_url'],dataset['nbeid'], fields, fields)
+    if 'value' in results:
+      print "value is in columns"
+      qry2 = '''%s%s.json?$query=SELECT %s, COUNT(*) AS cnt GROUP BY %s HAVING COUNT(*) > 1 |>  SELECT SUM(cnt) AS cnt  ''' % (dataset['base_url'],dataset['nbeid'], fields, fields)
+    else:
+      qry2 = '''%s%s.json?$query=SELECT %s, COUNT(*) AS value GROUP BY %s HAVING COUNT(*) > 1 |>  SELECT SUM(value) AS value  ''' % (dataset['base_url'],dataset['nbeid'], fields, fields)
     return ProfileFields.getResults(sQobj, qry2)
 
   @staticmethod

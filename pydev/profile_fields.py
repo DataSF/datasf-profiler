@@ -64,7 +64,7 @@ def main():
   base_url =  configItems['baseUrl']
   field_type_fbf =  configItems['dd']['field_type']['fbf']
 
-  datasets = ProfileDatasets.getBaseDatasets(sQobj, base_url,  mmdd_fbf)
+  datasets = ProfileFields.getBaseDatasets(sQobj, base_url,  mmdd_fbf)
   ds_profiles = ProfileDatasets.getCurrentDatasetProfiles(sQobj, base_url, ds_profiles_fbf )
   field_types = ProfileDatasets.getFieldTypes(sQobj, base_url, field_type_fbf)
   datasets_stats =  ProfileDatasets.buildInsertDatasetProfiles(sQobj,  datasets, ds_profiles, mmdd_fbf, field_types)

@@ -2,12 +2,27 @@
 class ProfileFields:
 
   @staticmethod
+  def getBaseDatasets(sQobj, base_url, fbf):
+    #qry =  '''%s%s.json?$query=SELECT columnid, datasetid, nbeid, dataset_name, field_type, last_updt_dt_data  WHERE privateordeleted != true ''' % (base_url, fbf)
+
+    #df = PandasUtils.resultsToDf(sQobj, qry)
+    qryCols = '''columnid, datasetid, nbeid, dataset_name, field_type, last_updt_dt_data  WHERE privateordeleted != true '''
+    results_json = socrataQueriesObject.pageThroughResultsSelect(fbf, qryCols)
+    df = BuildDatasets.makeDf(results_json)
+    df['base_url'] = base_url
+    return PandasUtils.convertDfToDictrows(df)
+
+
+  @staticmethod
   def getResults(sQobj, qry):
     '''gets results from portal'''
     results = sQobj.getQryFull(qry)
     if results:
-      if len(results) > 0 and 'value' in results[0].keys() :
+      #if (not(type(results) is dict )):
+      if (len(results) > 0) and 'value' in results[0].keys():
         return  int(results[0]['value'])
+      if (len(results) > 0) and 'cnt' in results[0].keys():
+        return  int(results[0]['cnt'])
     return 0
 
   @staticmethod
