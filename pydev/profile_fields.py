@@ -8,6 +8,8 @@ from SocrataStuff import *
 from PandasUtils import *
 from PyLogger import *
 from Queries import *
+from Utils import *
+from JobStatusEmailerComposer import *
 
 def parse_opts():
   helpmsgConfigFile = 'Use the -c to add a config yaml file. EX: fieldConfig.yaml'
@@ -49,7 +51,8 @@ def main():
   configItems = cI.getConfigs()
   lg = pyLogger(configItems)
   logger = lg.setConfig()
-  #logger.info("****************JOB START******************")
+  dsse = JobStatusEmailerComposer(configItems, logger)
+  logger.info("****************JOB START******************")
   sc = SocrataClient(config_inputdir, configItems, logger)
   client = sc.connectToSocrata()
   clientItems = sc.connectToSocrataConfigItems()
@@ -58,19 +61,23 @@ def main():
 
   mmdd_fbf = configItems['dd']['master_dd']['fbf']
   ds_profiles_fbf =  configItems['dd']['ds_profiles']['fbf']
-  base_url =  configItems['base_url']
+  base_url =  configItems['baseUrl']
   field_type_fbf =  configItems['dd']['field_type']['fbf']
 
-  datasets = ProfileDatasets.getBaseData(sQobj, base_url,  mmdd_fbf)
+  datasets = ProfileDatasets.getBaseDatasets(sQobj, base_url,  mmdd_fbf)
   ds_profiles = ProfileDatasets.getCurrentDatasetProfiles(sQobj, base_url, ds_profiles_fbf )
   field_types = ProfileDatasets.getFieldTypes(sQobj, base_url, field_type_fbf)
   datasets_stats =  ProfileDatasets.buildInsertDatasetProfiles(sQobj,  datasets, ds_profiles, mmdd_fbf, field_types)
-  print datasets_stats
-  #for dataset in datasets[0:1]:
-  #  if dataset['datasetid'] in ds_profile_keys:
-  #    print 'in here'
-  #  else:
-  #    dataset_stats = ProfileDatasets.getTypeCnt(sQobj,dataset, mmdd_fbf, field_types)
+  if len(datasets_stats)> 1:
+    dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':len(datasets_stats), 'DatasetRecordsCnt':0, 'fourXFour': ds_profiles_fbf, 'row_id': configItems['row_id']}
+    dataset_info = scrud.postDataToSocrata(dataset_info, datasets_stats)
+    dsse = JobStatusEmailerComposer(configItems, logger)
+    dsse.sendJobStatusEmail([dataset_info])
+  else:
+    dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': "Nothing to Insert"}
+    dataset_info['isLoaded'] = 'success'
+    dsse.sendJobStatusEmail([dataset_info])
+
 
 
 

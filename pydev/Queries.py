@@ -1,70 +1,12 @@
 
-
-#queries
-
-import pandas as pd
-from PandasUtils import *
-
-class ProfileDatasets:
-
-  @staticmethod
-  def getCurrentDatasetProfiles(sQobj, base_url, fbf):
-    all_datasets = {}
-    qry = '''%s%s.json?$query=SELECT datasetid, last_updt_dt_data ''' % (base_url, fbf)
-    dictList =  PandasUtils.resultsToDictList(sQobj, qry)
-    if dictList:
-      for item in dictList:
-        all_datasets[item['datasetid']] = item['last_updt_dt_data']
-    return all_datasets
-
-  @staticmethod
-  def getBaseData(sQobj, base_url, fbf):
-    qry =  '''%s%s.json?$query=SELECT datasetid, nbeid, last_updt_dt_data, count(*) as value  WHERE privateordeleted != true GROUP BY datasetid, nbeid, last_updt_dt_data''' % (base_url, fbf)
-    df = PandasUtils.resultsToDf(sQobj, qry)
-    df['base_url'] = base_url
-    return PandasUtils.convertDfToDictrows(df)
-
-  @staticmethod
-  def getFieldTypes(sQobj, base_url, fieldtype_dd):
-    qry =  '''%s%s.json?$query=SELECT field_type  ''' % (base_url, fieldtype_dd)
-    print qry
-    results = sQobj.getQryFull(qry)
-    df = PandasUtils.makeDfFromJson(results)
-    return df['field_type'].tolist()
-
-
-  @staticmethod
-  def getTypeCnt(sQobj, dataset, mmdd_fbf, field_types):
-    print dataset
-    dataset_stats = {'field_count': dataset['value'], 'datasetid': dataset['datasetid'], 'nbeid': dataset['nbeid']}
-    field = ''
-    qry_num_fields = '''%s%s.json?$query=SELECT field_type, count(*)  as value WHERE privateordeleted != true AND datasetid = '%s' AND field_type = ''' % (dataset['base_url'], mmdd_fbf, dataset['datasetid'])
-    for ft in field_types:
-      label = ft.lower().replace('geometry: ', '')+ "_count"
-      qry = qry_num_fields + "'" + ft.lower()  +"'" + ' GROUP BY field_type'
-      dataset_stats[label] = ProfileFields.getResults(sQobj, qry)
-    dataset_stats['record_count'] = ProfileFields.getTotal(sQobj, dataset['base_url'], dataset['nbeid'])
-    return dataset_stats
-
-  @staticmethod
-  def buildInsertDatasetProfiles(sQobj, datasets, ds_profiles, mmdd_fbf, field_types):
-    datasets_stats = []
-    ds_profile_keys = ds_profiles.keys()
-    for dataset in datasets[0:1]:
-      if dataset['datasetid'] in ds_profile_keys:
-        print 'in here'
-      else:
-        dataset_stats = ProfileDatasets.getTypeCnt(sQobj,dataset, mmdd_fbf, field_types)
-        datasets_stats.append(dataset_stats)
-    return datasets_stats
-
 class ProfileFields:
+
   @staticmethod
   def getResults(sQobj, qry):
     '''gets results from portal'''
     results = sQobj.getQryFull(qry)
     if results:
-      if len(results) > 0:
+      if len(results) > 0 and 'value' in results[0].keys() :
         return  int(results[0]['value'])
     return 0
 
@@ -74,7 +16,6 @@ class ProfileFields:
     #'https://data.sfgov.org/resource/93gi-sfd2.json?$query=SELECT coubase_url,nt(*)
     dataset_cnt_total_qry = '''%s%s.json?$query=SELECT count(*) as value''' % (base_url, nbeId)
     return ProfileFields.getResults(sQobj, dataset_cnt_total_qry)
-
 
   @staticmethod
   def getNulls(base_url, nbeId, fieldName ):
@@ -115,22 +56,22 @@ class ProfileFields:
 
   @staticmethod
   def getCompleteness(actual_cnt, total):
-    '''completeness – percentage calculated as Actual divided by the total number of records'''
+    '''Completeness: percentage calculated as actual divided by the total number of records'''
     return round(actual_cnt/total, 2)*100
 
   @staticmethod
   def getUniqueness(cardinality_cnt, total):
-    '''Uniqueness – percentage calculated as Cardinality divided by the total number of records '''
+    '''Uniqueness: percentage calculated as Cardinality divided by the total number of records '''
     return round(cardinality_cnt/total, 2)*100
 
   @staticmethod
   def distinctness(cardinality_cnt, actual_cnt):
-    '''Distinctness – percentage calculated as Cardinality divided by Actual'''
+    '''Distinctness: percentage calculated as Cardinality divided by Actual'''
     return reround(cardinality_cnt/actual_cnt, 2)*100
 
   @staticmethod
   def isPrimaryKeyCandidate(uniquess, completeness):
-    if unique = 100 and completeness = 100:
+    if unique == 100 and completeness == 100:
       return True
     return False
 
@@ -141,19 +82,19 @@ class ProfileFields:
     avg_qry = '''%s%s.json?$select=avg(%s) as value''' % (base_url, nbeId, fieldName)
 
   @staticmethod
-  def getMax(base_url, nbeId, fieldName)
+  def getMax(base_url, nbeId, fieldName):
     '''gets max for field- can work on text and numeric fields'''
     #https://data.sfgov.org/resource/e2px-wugd.json?$select=max(project_units) as value
     max_qry = '''%s%s.json?$select=max(%s) as value''' % (base_url, nbeId, fieldName)
 
   @staticmethod
-  def getMin(base_url, nbeId, fieldName)
+  def getMin(base_url, nbeId, fieldName):
     '''gets max for field- can work on text and numeric fields'''
     #https://data.sfgov.org/resource/e2px-wugd.json?$select=mix(project_units) as value
     min_qry = '''%s%s.json?$select=min(%s) as value''' % (base_url, nbeId, fieldName)
 
   @staticmethod
-  def getSum(base_url, nbeId, fieldName)
+  def getSum(base_url, nbeId, fieldName):
     sum_qry = '''%s%s.json?$select=sum(%s) as value''' % (base_url, nbeId, fieldName)
 
   @staticmethod
@@ -178,13 +119,13 @@ class ProfileFields:
 
   @staticmethod
   def getMode(base_url, nbeId, fieldName):
-   '''gets the mode of a field'''
-    #https://data.sfgov.org/resource/e2px-wugd.json?$query=SELECT project_units, count(*) as value GROUP BY project_units ORDER BY count(*) desc limit 1
+    '''gets the mode of a field'''
+    #https://data.sfgov.org/resource/e2px-wugd.json?$query=SELECT project_units, count(*) as value GROUP BY project_units ORDER BY count(*) desc limit 1'''
     get_mode_qry = '''%s%s?$query=SELECT %s, count(*) as value GROUP BY %s ORDER BY count(*) desc limit 1 |> select %s as value ''' % (base_url, nbeId, fieldName, fieldName, fieldName)
 
   @staticmethod
-  def getMedian(base_url, nbeId, fieldName)
-    '''Gets the median of a numeric field''''
+  def getMedian(base_url, nbeId, fieldName):
+    '''Gets the median of a numeric field'''
     #https://data.sfgov.org/resource/e2px-wugd.json?$query=SELECT project_units as value GROUP BY project_units ORDER BY project_units
     get_values_qry = '''%s%s.json?$query=SELECT %s as value GROUP BY %s ORDER BY %s ''' % (base_url, nbeId, fieldName, fieldName)
     median =  np.median(np.array(lst))
@@ -192,6 +133,7 @@ class ProfileFields:
 
   @staticmethod
   def getRange(min, max):
+    '''returns the range of a numeric field'''
     return max-min
 
   @staticmethod

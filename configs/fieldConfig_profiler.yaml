@@ -1,22 +1,21 @@
 
 
 #dir configs
-pickle_dir: /Users/j9/Desktop/metadata-mgmt-tool/pickled/
-log_dir: /Users/j9/Desktop/metadata-mgmt-tool/logs/
-config_dir: /Users/j9/Desktop/metadata-mgmt-tool/configs/
-pickle_data_dir: /Users/j9/Desktop/metadata-mgmt-tool/pickled/datasets/
-wkbk_uploads_dir: /Users/j9/Desktop/metadata-mgmt-tool/wkbk_uploads/
+pickle_dir: /Users/j9/Desktop/datasf-profiler/pickled/
+log_dir: /Users/j9/Desktop/datasf-profiler/logs/
+config_dir: /Users/j9/Desktop/datasf-profiler/configs/
+pickle_data_dir: /Users/j9/Desktop/datasf-profiler/pickled/datasets/
+wkbk_uploads_dir: /Users/j9/Desktop/datasf-profiler/wkbk_uploads/
+inputConfigDir: /Users/j9/Desktop/datasf-profiler/configs/
 
 
 #other yaml configs
 socrata_client_config_fname: socrata_config.yaml
-metadataset_config: metadatasets.yaml
-email_config_file: email_config.yaml
+email_config_file: email_config_gmail.yaml
 
 
 #file names
-exception_logfile: push_public_v_of_master_dd.txt
-output_json_fn: public_v_of_master_dd.json
+exception_logfile: profiler_logs.txt
 
 
 #socrata specific configs
@@ -35,7 +34,12 @@ job_name: Profile Dataset Fields
 #other stuff
 json_key: updt_fields
 app_name: Profile Data Fields
-base_url: https://data.sfgov.org/resource/
+baseUrl: https://data.sfgov.org/resource/
+
+
+dataset_name: Dataset Profiles
+row_id: datasetid
+
 
 dd:
   master_dd:
