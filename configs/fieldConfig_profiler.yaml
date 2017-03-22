@@ -1,12 +1,12 @@
 
 
 #dir configs
-pickle_dir: /Users/j9/Desktop/datasf-profiler/pickled/
-log_dir: /Users/j9/Desktop/datasf-profiler/logs/
-config_dir: /Users/j9/Desktop/datasf-profiler/configs/
-pickle_data_dir: /Users/j9/Desktop/datasf-profiler/pickled/datasets/
-wkbk_uploads_dir: /Users/j9/Desktop/datasf-profiler/wkbk_uploads/
-inputConfigDir: /Users/j9/Desktop/datasf-profiler/configs/
+pickle_dir: /home/ubuntu/datasf-profiler/pickled/
+log_dir: /home/ubuntu/datasf-profiler/logs/
+config_dir: /home/ubuntu/datasf-profiler/configs/
+pickle_data_dir: /home/ubuntu/datasf-profiler/pickled/datasets/
+wkbk_uploads_dir: /home/ubuntu/datasf-profiler/wkbk_uploads/
+inputConfigDir: /home/ubuntu/datasf-profiler/configs/
 
 
 #other yaml configs
