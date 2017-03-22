@@ -18,6 +18,7 @@ from cStringIO import StringIO
 import datetime
 import collections
 import os.path
+import json
 
 class DateUtils:
     @staticmethod
@@ -172,9 +173,28 @@ class FileUtils:
                 print str(e)
         return wrote_wkbk
 
+    @staticmethod
+    def write_json_object(json_object, output_dir, json_fn):
+        wroteFile = False
+        try:
+            json_object = EncodeObjects.convertToUTF8(json_object)
+            with open(output_dir + json_fn, 'w') as f:
+                json.dump(json_object, f, ensure_ascii=False)
+                wroteFile = True
+        except Exception, e:
+            print str(e)
+        return wroteFile
+
+    @staticmethod
+    def loadJsonFile(path_to_file, json_fn):
+        json_obj = {}
+        if os.path.isfile( path_to_file + json_fn):
+            json_data = open(path_to_file + json_fn).read()
+            json_obj =  json.loads(json_data)
+        return json_obj
+
 
 class ListUtils:
-
     '''class for list util functions'''
     @staticmethod
     def flatten_list(listofLists):

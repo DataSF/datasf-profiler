@@ -190,10 +190,11 @@ class SocrataQueries:
 
     def pageThroughResultsSelect(self, fbf, qry_cols):
         row_cnt = self.getRowCnt(fbf)
+        print row_cnt
         returned_records = 0
         offset = 0
         all_results = []
-        while returned_records < row_cnt:
+        while offset < row_cnt:
             limit_offset = "&$limit=1000&$offset="+ str(offset)
             qry = '?$select='+qry_cols+ limit_offset
             try:
@@ -210,7 +211,6 @@ class SocrataQueries:
                 print str(e)
                 break
             offset = offset + 1000
-            returned_records = len(results)+ returned_records
         return all_results
 
 

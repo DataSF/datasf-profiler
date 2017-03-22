@@ -17,7 +17,7 @@ configs/socrata_config.yaml
 configs/email_config_server.yaml
 configs/email_config_gmail.yaml
 configs/fieldConfig_profiler_desktop.yaml
-
+pickled/*
 pydev/queries_.py
 *ipynb
 # Packages #

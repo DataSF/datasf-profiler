@@ -1,16 +1,25 @@
 
+# coding: utf-8
+#!/usr/bin/env python
+
+from Utils import *
+from PandasUtils import *
+
 class ProfileFields:
 
   @staticmethod
-  def getBaseDatasets(sQobj, base_url, fbf):
+  def getBaseDatasetJson(sQobj, configItems, fbf):
     #qry =  '''%s%s.json?$query=SELECT columnid, datasetid, nbeid, dataset_name, field_type, last_updt_dt_data  WHERE privateordeleted != true ''' % (base_url, fbf)
+    qryCols = '''columnid, datasetid, nbeid, dataset_name, field_type, last_updt_dt_data WHERE privateordeleted != true  '''
+    results_json = sQobj.pageThroughResultsSelect(fbf, qryCols)
+    return FileUtils.write_json_object(results_json, configItems['pickle_data_dir'], configItems['mm_dd_json_fn'])
 
-    #df = PandasUtils.resultsToDf(sQobj, qry)
-    qryCols = '''columnid, datasetid, nbeid, dataset_name, field_type, last_updt_dt_data  WHERE privateordeleted != true '''
-    results_json = socrataQueriesObject.pageThroughResultsSelect(fbf, qryCols)
-    df = BuildDatasets.makeDf(results_json)
-    df['base_url'] = base_url
-    return PandasUtils.convertDfToDictrows(df)
+  @staticmethod
+  def get_dataset_as_dfList(data_dir, json_file, base_url):
+    json_obj = FileUtils.loadJsonFile(data_dir, json_file)
+    df = PandasUtils.makeDfFromJson(json_obj)
+    df_list = PandasUtils.convertDfToDictrows(df)
+    return df_list
 
 
   @staticmethod
@@ -18,6 +27,7 @@ class ProfileFields:
     '''gets results from portal'''
     results = sQobj.getQryFull(qry)
     if results:
+      print results
       #if (not(type(results) is dict )):
       if (len(results) > 0) and 'value' in results[0].keys():
         return  int(results[0]['value'])

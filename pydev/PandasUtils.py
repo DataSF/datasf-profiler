@@ -13,6 +13,12 @@ class PandasUtils:
     wkbk = pd.ExcelFile(fn)
     return wkbk
 
+  @staticmethod
+  def get_dataset_as_dfList(pickle_data_dir, json_file, base_url):
+    json_obj = FileUtils.loadJsonFile(pickle_data_dir, json_file)
+    df = PandasUtils.makeDfFromJson(json_obj)
+    df_list = PandasUtils.convertDfToDictrows(df)
+    return df_list
 
   @staticmethod
   def removeCols(df, list_of_cols_to_remove):

@@ -42,7 +42,11 @@ class ProfileDatasets:
     qry =  '''%s%s.json?$query=SELECT api_key WHERE datasetid = '%s' ''' % (dataset['base_url'],mmdd_fbf, dataset['datasetid'])
     results = sQobj.getQryFull(qry)
     results = DictUtils.consolidateDictList(results, 'api_key')
-    fields = ', '.join(results)
+    reserve_word_keys = ['by', 'having', 'group', 'select']
+    #reserve_word_mapping = {'by': 'by as bby'}
+    fields = [field for field in results if field not in reserve_word_keys]
+    #fields_weird =  [reserve_word_mapping[field] for field in results if field in reserve_word_keys ]
+    fields = ', '.join(fields)
     if 'value' in results:
       print "value is in columns"
       qry2 = '''%s%s.json?$query=SELECT %s, COUNT(*) AS cnt GROUP BY %s HAVING COUNT(*) > 1 |>  SELECT SUM(cnt) AS cnt  ''' % (dataset['base_url'],dataset['nbeid'], fields, fields)
@@ -96,7 +100,7 @@ class ProfileDatasets:
         dataset_stats = {}
         if dataset['datasetid'] in ds_profile_keys:
           if ( not ( DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt ))):
-            dataset_stats = getDatasetStats(sQobj,dataset, mmdd_fbf, field_types)
+            dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types)
         else:
           dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types)
         if len(dataset_stats.keys()) > 1 :
