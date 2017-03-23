@@ -60,18 +60,26 @@ def main():
   sQobj = SocrataQueries(clientItems, configItems, logger)
 
   mmdd_fbf = configItems['dd']['master_dd']['fbf']
-  ds_profiles_fbf =  configItems['dd']['ds_profiles']['fbf']
+  field_profiles_fbf =  configItems['dd']['field_profiles']['fbf']
   base_url =  configItems['baseUrl']
   field_type_fbf =  configItems['dd']['field_type']['fbf']
 
+  dt_format = '%Y-%m-%dT%H:%M:%S.000'
   #load_mm_dd = ProfileFields.getBaseDatasetJson(sQobj, configItems,  mmdd_fbf)
   load_mm_dd  = True
   if load_mm_dd :
-    load_datasets = ProfileFields.get_dataset_as_dfList(configItems['pickle_data_dir'], configItems['mm_dd_json_fn'], base_url)
-    print len(load_datasets)
+    master_dfList = ProfileFields.get_dataset_as_dfList(configItems['pickle_data_dir'], configItems['mm_dd_json_fn'], base_url)
+    #print len(load_datasets)
+    for field in master_dfList:
+      if field['datasetid'] == 'aaxw-2cb8':
+        print
+        print field['api_key']
+        #if field['columnid']== 'aaxw-2cb8_affordable':
+        field_stats = ProfileFields.profileField(sQobj,field, dt_format)
+        print field_stats
 
 
-  #ds_profiles = ProfileDatasets.getCurrentDatasetProfiles(sQobj, base_url, ds_profiles_fbf )
+  #field_profiles = ProfileDatasets.getCurrentFieldProfiles(sQobj, base_url, field_profiles_fbf )
   #field_types = ProfileDatasets.getFieldTypes(sQobj, base_url, field_type_fbf)
   #datasets_stats =  ProfileDatasets.buildInsertDatasetProfiles(sQobj,  datasets, ds_profiles, mmdd_fbf, field_types)
   #if len(datasets_stats)> 1:

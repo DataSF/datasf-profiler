@@ -54,6 +54,10 @@ class DateUtils:
             return False
         return False
 
+    @staticmethod
+    def strToDtObj(strTime, dt_format):
+        return  datetime.datetime.strptime(strTime, dt_format)
+
 class PickleUtils:
     @staticmethod
     def pickle_cells(cells, pickle_name ):

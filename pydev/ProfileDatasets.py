@@ -14,13 +14,8 @@ class ProfileDatasets:
 
   @staticmethod
   def getCurrentDatasetProfiles(sQobj, base_url, fbf):
-    all_datasets = {}
     qry = '''%s%s.json?$query=SELECT datasetid, last_updt_dt ''' % (base_url, fbf)
-    dictList =  PandasUtils.resultsToDictList(sQobj, qry)
-    if dictList:
-      for item in dictList:
-        all_datasets[ item['datasetid'] ] = item['last_updt_dt']
-    return all_datasets
+    return ProfileFields.getDataInfoAsDictList(sQobj, qry)
 
   @staticmethod
   def getBaseDatasets(sQobj, base_url, fbf):
@@ -39,12 +34,13 @@ class ProfileDatasets:
 
   @staticmethod
   def getDatasetDupes(sQobj, mmdd_fbf, dataset):
-    qry =  '''%s%s.json?$query=SELECT api_key WHERE datasetid = '%s' ''' % (dataset['base_url'],mmdd_fbf, dataset['datasetid'])
+    qry =  '''%s%s.json?$query=SELECT api_key WHERE datasetid = '%s' and field_type != 'blob' ''' % (dataset['base_url'],mmdd_fbf, dataset['datasetid'])
     results = sQobj.getQryFull(qry)
     results = DictUtils.consolidateDictList(results, 'api_key')
     reserve_word_keys = ['by', 'having', 'group', 'select']
     #reserve_word_mapping = {'by': 'by as bby'}
     fields = [field for field in results if field not in reserve_word_keys]
+    print fields
     #fields_weird =  [reserve_word_mapping[field] for field in results if field in reserve_word_keys ]
     fields = ', '.join(fields)
     if 'value' in results:
@@ -52,6 +48,7 @@ class ProfileDatasets:
       qry2 = '''%s%s.json?$query=SELECT %s, COUNT(*) AS cnt GROUP BY %s HAVING COUNT(*) > 1 |>  SELECT SUM(cnt) AS cnt  ''' % (dataset['base_url'],dataset['nbeid'], fields, fields)
     else:
       qry2 = '''%s%s.json?$query=SELECT %s, COUNT(*) AS value GROUP BY %s HAVING COUNT(*) > 1 |>  SELECT SUM(value) AS value  ''' % (dataset['base_url'],dataset['nbeid'], fields, fields)
+    print qry2
     return ProfileFields.getResults(sQobj, qry2)
 
   @staticmethod
@@ -63,6 +60,8 @@ class ProfileDatasets:
 
   @staticmethod
   def getTypeCnt(sQobj, dataset, mmdd_fbf, field_types):
+    print
+    print dataset['datasetid']
     dataset_stats = {'field_count': dataset['value'], 'datasetid': dataset['datasetid'], 'nbeid': dataset['nbeid'], 'dataset_name': dataset['dataset_name']}
     field = ''
     qry_num_fields = '''%s%s.json?$query=SELECT field_type, count(*)  as value WHERE privateordeleted != true AND datasetid = '%s' AND field_type = ''' % (dataset['base_url'], mmdd_fbf, dataset['datasetid'])
@@ -92,7 +91,7 @@ class ProfileDatasets:
     ds_profiles_fbf =  configItems['dd']['ds_profiles']['fbf']
     base_url =  configItems['baseUrl']
     ds_profile_keys = ds_profiles.keys()
-    datasets_chunks = ListUtils.makeChunks(datasets, 5)
+    datasets_chunks = ListUtils.makeChunks(datasets, 4)
     dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': ds_profiles_fbf, 'row_id': configItems['row_id']}
     for chunk in datasets_chunks:
       datasets_stats = []
