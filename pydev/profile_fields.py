@@ -69,16 +69,19 @@ def main():
   load_mm_dd  = True
   if load_mm_dd :
     master_dfList = ProfileFields.get_dataset_as_dfList(configItems['pickle_data_dir'], configItems['mm_dd_json_fn'], base_url)
-    #print len(load_datasets)
+    load_list = []
     for field in master_dfList:
       if field['datasetid'] == 'aaxw-2cb8':
         print
         print field['api_key']
-        #if field['columnid']== 'aaxw-2cb8_affordable':
-        field_stats = ProfileFields.profileField(sQobj,field, dt_format)
-        print field_stats
-
-
+        if field['columnid']== 'aaxw-2cb8__80_ami' or field['columnid'] == 'aaxw-2cb8_location':
+          field_stats = ProfileFields.profileField(sQobj,field, dt_format)
+          if('base_url') in field_stats.keys():
+            del field_stats['base_url']
+          load_list.append(field_stats)
+    print load_list
+    cool = FileUtils.write_wkbk_csv('intitial_load.csv', load_list, load_list[0].keys())
+    print cool
   #field_profiles = ProfileDatasets.getCurrentFieldProfiles(sQobj, base_url, field_profiles_fbf )
   #field_types = ProfileDatasets.getFieldTypes(sQobj, base_url, field_type_fbf)
   #datasets_stats =  ProfileDatasets.buildInsertDatasetProfiles(sQobj,  datasets, ds_profiles, mmdd_fbf, field_types)

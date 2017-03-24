@@ -185,10 +185,14 @@ class SocrataQueries:
         return r.json()
 
     def getQryFull(self, qry):
-        r = requests.get( qry , auth=( self.username, base64.b64decode(self.passwd)))
-        if r.status_code != 200:
+        try:
+            r = requests.get( qry , auth=( self.username, base64.b64decode(self.passwd)))
+            if r.status_code != 200:
+                return None
+            return r.json()
+        except Exception, e:
+            print str(e)
             return None
-        return r.json()
 
     def pageThroughResultsSelect(self, fbf, qry_cols):
         row_cnt = self.getRowCnt(fbf)
