@@ -12,10 +12,13 @@ from ProfileFields import *
 
 class ProfileDatasets:
 
+
   @staticmethod
   def getCurrentDatasetProfiles(sQobj, base_url, fbf):
     qry = '''%s%s.json?$query=SELECT datasetid, last_updt_dt ''' % (base_url, fbf)
-    return ProfileFields.getDataInfoAsDictList(sQobj, qry)
+    dictList = PandasUtils.resultsToDictList(sQobj, qry)
+    return PandasUtils.getDictListAsMappedDict('datasetid', 'last_updt_dt', dictList)
+
 
   @staticmethod
   def getBaseDatasets(sQobj, base_url, fbf):

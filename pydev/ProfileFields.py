@@ -11,8 +11,9 @@ class ProfileFields:
 
   @staticmethod
   def getCurrentFieldProfiles(sQobj, base_url, fbf ):
-    qry =  '''%s%s.json?$query=SELECT columnid, datasetid, nbeid, dataset_name, field_type, last_updt_dt  WHERE privateordeleted != true ''' % (base_url, fbf)
-    return ProfileDatasets.getDataInfoAsDictList(sQobj, qry)
+    qry =  '''%s%s.json?$query=SELECT columnid, last_updt_dt  WHERE privateordeleted != true ''' % (base_url, fbf)
+    dictList = PandasUtils.resultsToDictList(sQobj, qry)
+    return PandasUtils.getDictListAsMappedDict('columnid', 'last_updt_dt', dictList)
 
   @staticmethod
   def getBaseDatasetJson(sQobj, configItems, fbf):

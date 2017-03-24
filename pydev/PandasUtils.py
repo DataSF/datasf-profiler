@@ -21,6 +21,15 @@ class PandasUtils:
     return df_list
 
   @staticmethod
+  def getDictListAsMappedDict(fieldColKey, fieldColValue, dictList=None):
+    '''maps a dict list to a dict of k,v pairs'''
+    dictMapped = {}
+    if dictList:
+      for item in dictList:
+        dictMapped[ item[fieldColKey] ] = item[fieldColValue]
+    return dictMapped
+
+  @staticmethod
   def removeCols(df, list_of_cols_to_remove):
     '''removes cols inplace'''
     df_col = list(df.columns)
