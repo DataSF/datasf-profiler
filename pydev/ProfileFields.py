@@ -11,9 +11,23 @@ class ProfileFields:
 
   @staticmethod
   def getCurrentFieldProfiles(sQobj, base_url, fbf ):
-    qry =  '''%s%s.json?$query=SELECT columnid, last_updt_dt  WHERE privateordeleted != true ''' % (base_url, fbf)
+    qry =  '''%s%s.json?$query=SELECT columnid, last_updt_dt''' % (base_url, fbf)
     dictList = PandasUtils.resultsToDictList(sQobj, qry)
     return PandasUtils.getDictListAsMappedDict('columnid', 'last_updt_dt', dictList)
+
+  @staticmethod
+  def get_field_lengths(sQobj, base_url, nbeId, fieldName, fieldType):
+    minMax = {}
+    if fieldType != 'numeric':
+      qry = '''%s%s?$query=SELECT %s as label WHERE %s IS NOT NULL GROUP BY %s ORDER BY %s ''' % (base_url, nbeId, fieldName, fieldName, fieldName, fieldName)
+      results = sQobj.getQryFull(qry)
+      df = PandasUtils.makeDfFromJson(results)
+      items = list(df['label'])
+      items = [len(str(item)) for item in items]
+      minMax['min_field_length'] = min(items)
+      minMax['max_field_length'] = max(items)
+      minMax['avg_field_length']  = round(np.mean(items),2)
+    return minMax
 
   @staticmethod
   def getBaseDatasetJson(sQobj, configItems, fbf):
@@ -34,7 +48,6 @@ class ProfileFields:
     '''gets results from portal'''
     results = sQobj.getQryFull(qry)
     if results:
-      print results
       #if (not(type(results) is dict )):
       if (len(results) > 0) and 'value' in results[0].keys():
         try:
@@ -49,53 +62,73 @@ class ProfileFields:
     return 0
 
   @staticmethod
-  def profileField(sQobj,field, dt_format=None):
-    field['total'] = ProfileFields.getTotal(sQobj, field['base_url'], field['nbeid'])
-    print "total: " + str(field['total'])
-    field['null'] =  ProfileFields.getNulls(sQobj, field['base_url'], field['nbeid'], field['api_key'])
-    print "null: " + str(field['null'])
-    field['actual'] =ProfileFields.getActuals(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
-    print "actual: " + str(field['actual'])
-    field['missing'] = ProfileFields.getMissing(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
-    print "missing: " + str(field['missing'])
-    field['cardinality'] = ProfileFields.getCardinality(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
-    print "cardinality: " + str(field['cardinality'])
-    field['completeness'] = ProfileFields.getCompleteness(field['actual'], field['total'])
-    print "completeness: " + str(field['completeness'])
-    field['uniqueness'] = ProfileFields.getUniqueness(field['cardinality'], field['total'])
-    print "uniqueness: " + str(field['uniqueness'])
-    field["distinctness"] = ProfileFields.getDistinctness(field['cardinality'], field['actual'])
-    print "distinctness: " + str(field['distinctness'])
-    field['is_primary_key_candidate'] = ProfileFields.isPrimaryKeyCandidate(field['uniqueness'], field['completeness'])
-    print "is_primary_key_candidate: " + str(field['is_primary_key_candidate'])
+  def profileField(sQobj,field, dt_format):
+    field['total_count'] = ProfileFields.getTotal(sQobj, field['base_url'], field['nbeid'])
+    #print "total: " + str(field['total_count'])
+    field['null_count'] =  ProfileFields.getNulls(sQobj, field['base_url'], field['nbeid'], field['api_key'])
+    #print "null: " + str(field['null_count'])
 
-    field['max'] = ProfileFields.getMax(sQobj, field['base_url'], field['nbeid'], field['api_key'])
-    print "max: " + str(field['max'])
-    field['min'] = ProfileFields.getMin(sQobj, field['base_url'], field['nbeid'], field['api_key'])
-    print "min: " + str( field['min'])
+    field['missing_count'] = ProfileFields.getMissing(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
+    field['actual_count'] =ProfileFields.getActuals(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'],field['missing_count'])
+    #print "actual_count: " + str(field['actual_count'])
+
+    #print "missing: " + str(field['missing'])
+    field['cardinality'] = ProfileFields.getCardinality(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
+    #print "cardinality: " + str(field['cardinality'])
+    field['completeness'] = ProfileFields.getCompleteness(field['actual_count'], field['total_count'])
+    #print "completeness: " + str(field['completeness'])
+    field['uniqueness'] = ProfileFields.getUniqueness(field['cardinality'], field['total_count'])
+    #print "uniqueness: " + str(field['uniqueness'])
+    field["distinctness"] = ProfileFields.getDistinctness(field['cardinality'], field['actual_count'])
+    #print "distinctness: " + str(field['distinctness'])
+    field['is_primary_key_candidate'] = ProfileFields.isPrimaryKeyCandidate(field['uniqueness'], field['completeness'])
+    #print "is_primary_key_candidate: " + str(field['is_primary_key_candidate'])
+
+    field['max'] = ProfileFields.getMax(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
+    #print "max: " + str(field['max'])
+    field['min'] = ProfileFields.getMin(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
+    #print "min: " + str( field['min'])
     field['mode'] = ProfileFields.getMode(sQobj, field['base_url'], field['nbeid'], field['api_key'])
-    print "mode: " + str( field['mode'])
+    #print "mode: " + str( field['mode'])
 
     if field['field_type'] == 'timestamp':
       field['range'] = ProfileFields.getRange(field['min'], field['max'], field['field_type'], dt_format)
-      print "range: " + str(field['range'])
+      #print "range: " + str(field['range'])
     else:
       field['range'] = ProfileFields.getRange(field['min'], field['max'], field['field_type'])
-      print "range: " + str(field['range'])
+      #print "range: " + str(field['range'])
+
+    minMaxLens = ProfileFields.get_field_lengths(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
+    if len(minMaxLens.keys()) > 0:
+        field.update(minMaxLens)
+
     if field['field_type'] == 'numeric':
       field['average'] = ProfileFields.getAvg(sQobj, field['base_url'], field['nbeid'], field['api_key'])
-      print "average: " + str(field['average'])
+      #print "average: " + str(field['average'])
       field['sum'] = ProfileFields.getSum(sQobj, field['base_url'], field['nbeid'], field['api_key'])
-      print "sum: " + str(field['sum'])
+      #print "sum: " + str(field['sum'])
       field['std_dev'] = ProfileFields.getStdDev(sQobj, field['base_url'], field['nbeid'], field['api_key'])
-      print "std_dev: " + str(field['std_dev'])
+      #print "std_dev: " + str(field['std_dev'])
       field['variance'] = ProfileFields.getVariance(field['std_dev'])
-      print "variance: " + str(field['variance'])
-      lst = ProfileFields.get_stats(sQobj, field['base_url'], field['nbeid'], field['api_key'])
-
-
-
+      #print "variance: " + str(field['variance'])
+      more_stats = ProfileFields.get_stats(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
+      if len(more_stats.keys()) > 0:
+        field.update(more_stats)
+    field['last_updt_dt'] = DateUtils.get_current_timestamp()
+    print field
     return field
+
+  def profileFields(configItems, master_dfList):
+    for field in master_dfList:
+      if field['datasetid'] == 'aaxw-2cb8':
+        print
+        print field['api_key']
+        if field['columnid']== 'aaxw-2cb8__80_ami' or field['columnid'] == 'aaxw-2cb8_location':
+          field_stats = ProfileFields.profileField(sQobj,field, dt_format)
+          load_list.append(field_stats)
+    print load_list
+    cool = FileUtils.write_wkbk_csv('intitial_load.csv', load_list, load_list[0].keys())
+    print cool
 
   @staticmethod
   def getTotal(sQobj, base_url, nbeId):
@@ -113,16 +146,20 @@ class ProfileFields:
 
 
   @staticmethod
-  def getActuals(sQobj, base_url, nbeId, fieldName , field_type):
+  def getActuals(sQobj, base_url, nbeId, fieldName , field_type, missing_count):
     '''count of the number of records with an actual value (i.e., non-NULL and non-Missing)'''
     #https://data.sfgov.org/resource/e2px-wugd.json?$query=SELECT COUNT(project_status) WHERE project_status IS NOT NULL
     qry = '''%s%s.json?$query=SELECT COUNT(%s) AS value WHERE %s IS NOT NULL ''' %( base_url, nbeId, fieldName, fieldName)
-    qry2 = ''
-    if(field_type) == 'text':
-      qry2 =  '''AND %s not like '%%25  %%25' ''' % (fieldName)
-    elif (field_type) == 'numeric':
-      qry2 = '''AND %s != 0 ''' %(fieldName)
-    return ProfileFields.getResults(sQobj, qry+qry2)
+    #qry2 = ''
+    ##if(field_type) == 'text':
+    # qry2 =  '''OR (%s not like '%%25  %%25' or %s != " ") ''' % (fieldName, fieldName)
+    #elif (field_type) == 'numeric':
+    #  qry2 = '''OR %s != 0 ''' %(fieldName)
+    #print
+    #print "actuals"
+    #print qry+qry2
+    results = ProfileFields.getResults(sQobj, qry)
+    return results - missing_count
 
   @staticmethod
   def getMissing(sQobj, base_url, nbeId, fieldName , field_type):
@@ -131,11 +168,11 @@ class ProfileFields:
     #https://data.sfgov.org/resource/e2px-wugd.json?$query=SELECT planning_entitlements, count(*) as cnt WHERE planning_entitlements like "%25 %25"  GROUP By  planning_entitlements
     qry = None
     if(field_type) == 'text':
-      qry = '''%s%s.json?$query=SELECT %s, count(*) as value WHERE %s like '%%25  %%25' OR %s = '%%25 %%25' GROUP By  %s |> SELECT SUM(value) as value ''' %(base_url, nbeId, fieldName, fieldName,fieldName, fieldName)
+      qry = '''%s%s.json?$query=SELECT %s, count(*) as value WHERE %s like '%%25  %%25' OR %s = '%%25 %%25' or %s = " "  GROUP By  %s |> SELECT SUM(value) as value ''' %(base_url, nbeId, fieldName, fieldName,fieldName, fieldName, fieldName)
     elif (field_type) == 'numeric':
       #gets the zeros-> only applies to numeric
       #https://data.sfgov.org/resource/e2px-wugd.json?$query=SELECT count(*) as count where sro_units = 0
-      qry = '''%s%s.json?$query=SELECT count(*) as value  where %s = 0'''% (base_url, nbeId, fieldName)
+      qry = '''%s%s.json?$query=SELECT count(*) as value where %s = 0'''% (base_url, nbeId, fieldName)
     if qry:
       return ProfileFields.getResults(sQobj, qry)
     return 0
@@ -158,7 +195,7 @@ class ProfileFields:
   @staticmethod
   def getCompleteness(actual_cnt, total):
     '''Completeness: percentage calculated as actual divided by the total number of records'''
-    return round(int(actual_cnt)/int(total), 2)*100
+    return round((int(actual_cnt)/int(total))*100, 2)
 
   @staticmethod
   def getUniqueness(cardinality_cnt, total):
@@ -183,20 +220,23 @@ class ProfileFields:
     qry = '''%s%s.json?$select=avg(%s) as value''' % (base_url, nbeId, fieldName)
     return ProfileFields.getResults(sQobj, qry)
 
-
   @staticmethod
-  def getMax(sQobj, base_url, nbeId, fieldName):
+  def getMax(sQobj, base_url, nbeId, fieldName, field_type):
     '''gets max for field- can work on text and numeric fields'''
     #https://data.sfgov.org/resource/e2px-wugd.json?$select=max(project_units) as value
-    qry = '''%s%s.json?$select=max(%s) as value WHERE %s IS NOT NULL''' % (base_url, nbeId, fieldName, fieldName )
-    return ProfileFields.getResults(sQobj, qry)
+    if field_type != 'text':
+      qry = '''%s%s.json?$select=max(%s) as value WHERE %s IS NOT NULL''' % (base_url, nbeId, fieldName, fieldName )
+      return ProfileFields.getResults(sQobj, qry)
+    return ''
 
   @staticmethod
-  def getMin(sQobj, base_url, nbeId, fieldName):
+  def getMin(sQobj, base_url, nbeId, fieldName, field_type):
     '''gets max for field- can work on text and numeric fields'''
     #https://data.sfgov.org/resource/e2px-wugd.json?$select=mix(project_units) as value
-    qry = '''%s%s.json?$select=min(%s) as value WHERE %s IS NOT NULL''' % (base_url, nbeId, fieldName, fieldName)
-    return ProfileFields.getResults(sQobj, qry)
+    if field_type != 'text':
+      qry = '''%s%s.json?$select=min(%s) as value WHERE %s IS NOT NULL''' % (base_url, nbeId, fieldName, fieldName)
+      return ProfileFields.getResults(sQobj, qry)
+    return ''
 
   @staticmethod
   def getSum(sQobj, base_url, nbeId, fieldName):
@@ -231,12 +271,6 @@ class ProfileFields:
     qry = '''%s%s?$query=SELECT %s, count(*) as value WHERE %s IS NOT NULL GROUP BY %s ORDER BY count(*) desc limit 1 |> select %s as value ''' % (base_url, nbeId, fieldName, fieldName, fieldName, fieldName)
     return ProfileFields.getResults(sQobj, qry)
 
-  # @staticmethod
-  #def getMedian(base_url, nbeId, fieldName):
-  #  '''Gets the median of a numeric field'''
-  #   #https://data.sfgov.org/resource/e2px-wugd.json?$query=SELECT project_units as value GROUP BY project_units ORDER BY project_units
-  #   median =  np.median(np.array(lst))
-  #   return median
 
   @staticmethod
   def getRange(myMin, myMax, field_type, dt_format=None):
@@ -247,7 +281,7 @@ class ProfileFields:
       myMin = DateUtils.strToDtObj(myMin, dt_format)
       myMax = DateUtils.strToDtObj(myMax, dt_format)
       return abs((myMax - myMin).days)
-    return None
+    return ''
 
   @staticmethod
   def pretty_name(x):
@@ -258,22 +292,75 @@ class ProfileFields:
         return '%.1f%%' % x
 
   @staticmethod
-  def get_stats(sQobj, base_url, nbeId, fieldName):
-    qry_cols = '''%s  WHERE %s IS NOT NULL ORDER BY %s''' % (fieldName, fieldName, fieldName)
-    results =  sQobj.pageThroughResultsSelect(nbeId, qry_cols)
-    results = [float(result[fieldName]) for result in results]
-    lst = pd.Series(results)
+  def get_stats(sQobj, base_url, nbeId, fieldName, fieldType):
     stats = {}
-    for x in np.array([0.05, 0.25, 0.5, 0.75, 0.95]):
-      stats[ProfileFields.pretty_name(x)] = lst.quantile(x)
-    stats['iqr'] = stats['75%'] - stats['25%']
-    stats['kurtosis'] = lst.kurt()
-    stats['skewness'] = lst.skew()
-    #returns mean absolute deviation of the values for the requested axis
-    stats['mean_absolute_deviation'] = lst.mad()
-    stats['median'] =  lst.median()
-    print stats
+    if fieldType  == 'numeric':
+      qry_cols = '''%s as label WHERE %s IS NOT NULL ORDER BY %s''' % (fieldName, fieldName, fieldName)
+      results =  sQobj.pageThroughResultsSelect(nbeId, qry_cols)
+      results = [float(result[fieldName]) for result in results]
+      lst = pd.Series(results)
+      for x in np.array([0.05, 0.25, 0.5, 0.75, 0.95]):
+        stats[ProfileFields.pretty_name(x)] = lst.quantile(x)
+      stats['iqr'] = round((stats['75%'] - stats['25%']),2)
+      stats['kurtosis'] = round(lst.kurt(),2)
+      stats['skewness'] = round(lst.skew(),2)
+      #returns mean absolute deviation of the values for the requested axis
+      stats['mean_absolute_deviation'] = round(lst.mad(),2)
+      stats['median'] =  round(lst.median(),2)
+      #items = [len(str(item)) for item in items]
+      #minMax['min_field_length'] = min(items)
+      #minMax['max_field_length'] = max(items)
+      #minMax['avg_field_length']  = round(np.mean(items),2)
+      #stats['min_field_length'] =
     return stats
+
+  @staticmethod
+  def buildInsertFieldProfiles(sQobj, scrud, configItems, master_dfList, current_field_profiles):
+    src_records = 0
+    inserted_records = 0
+    dt_fmt = '%Y-%m-%dT%H:%M:%S'
+    dt_fmt_fields = '%Y-%m-%dT%H:%M:%S.000'
+    #mmdd_fbf = configItems['dd']['master_dd']['fbf']
+    field_profile_fbf =  configItems['dd']['field_profiles']['fbf']
+    row_id = configItems['dd']['field_profiles']['row_id']
+    base_url =  configItems['baseUrl']
+    profile_keys = current_field_profiles.keys()
+    field_chunks = ListUtils.makeChunks(master_dfList, 4)
+    dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': field_profile_fbf, 'row_id': row_id}
+    for chunk in field_chunks:
+      new_field_profiles = []
+      for field in chunk:
+        field_profile = {}
+        if field['columnid'] in profile_keys:
+          if ( not ( DateUtils.compare_two_timestamps( current_field_profiles[field['columnid']],  field['last_updt_dt_data'], dt_fmt , dt_fmt ))):
+            field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
+            if len(field_profile.keys()) > 1 :
+              new_field_profiles.append(field_profile)
+          else:
+            print field
+            field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
+            if len(field_profile.keys()) > 1 :
+              new_field_profiles.append(field_profile)
+
+        #else:
+        #  #if field['datasetid'] == 'aaxw-2cb8':
+        #  if field['columnid'] == 'aaxw-2cb8_street_name':
+        #    field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
+        #    print field_profile
+        #    print "*****"
+
+      if len(new_field_profiles) > 0:
+        print "upserting"
+        dataset_info['DatasetRecordsCnt'] = 0
+        dataset_info['SrcRecordsCnt'] = len(new_field_profiles)
+        dataset_info = scrud.postDataToSocrata(dataset_info, new_field_profiles)
+        print dataset_info
+      src_records = src_records + dataset_info['SrcRecordsCnt']
+      inserted_records = inserted_records + dataset_info['DatasetRecordsCnt']
+    dataset_info['SrcRecordsCnt'] = src_records
+    dataset_info['DatasetRecordsCnt'] = inserted_records
+    return dataset_info
+
 
 
 

@@ -23,8 +23,10 @@ class ProfileDatasets:
   @staticmethod
   def getBaseDatasets(sQobj, base_url, fbf):
     qry =  '''%s%s.json?$query=SELECT datasetid, nbeid, last_updt_dt_data, dataset_name, count(*) as value  WHERE privateordeleted != true GROUP BY datasetid, nbeid, last_updt_dt_data, dataset_name''' % (base_url, fbf)
+    print qry
     df = PandasUtils.resultsToDf(sQobj, qry)
     df['base_url'] = base_url
+    df =  PandasUtils.fillNaWithBlank(df)
     return PandasUtils.convertDfToDictrows(df)
 
   @staticmethod
@@ -86,16 +88,16 @@ class ProfileDatasets:
 
 
   @staticmethod
-  def buildInsertDatasetProfiles(sQobj, scrud, configItems, datasets, ds_profiles, field_types):
+  def buildInsertDatasetProfiles(sQobj, scrud, configItems, datasets, ds_profiles, field_types, dt_fmt):
     src_records = 0
     inserted_records = 0
-    dt_fmt = '%Y-%m-%dT%H:%M:%S'
     mmdd_fbf = configItems['dd']['master_dd']['fbf']
     ds_profiles_fbf =  configItems['dd']['ds_profiles']['fbf']
+    row_id = configItems['dd']['ds_profiles']['row_id']
     base_url =  configItems['baseUrl']
     ds_profile_keys = ds_profiles.keys()
     datasets_chunks = ListUtils.makeChunks(datasets, 4)
-    dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': ds_profiles_fbf, 'row_id': configItems['row_id']}
+    dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': ds_profiles_fbf, 'row_id': row_id}
     for chunk in datasets_chunks:
       datasets_stats = []
       for dataset in chunk:
@@ -107,11 +109,10 @@ class ProfileDatasets:
           dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types)
         if len(dataset_stats.keys()) > 1 :
           datasets_stats.append(dataset_stats)
-      if len(datasets_stats) > 1:
+      if len(datasets_stats) > 0:
         dataset_info['DatasetRecordsCnt'] = 0
         dataset_info['SrcRecordsCnt'] = len(datasets_stats)
         dataset_info = scrud.postDataToSocrata(dataset_info, datasets_stats)
-        print dataset_info
         src_records = src_records + dataset_info['SrcRecordsCnt']
         inserted_records = inserted_records + dataset_info['DatasetRecordsCnt']
     dataset_info['SrcRecordsCnt'] = src_records

@@ -64,11 +64,12 @@ def main():
   ds_profiles_fbf =  configItems['dd']['ds_profiles']['fbf']
   base_url =  configItems['baseUrl']
   field_type_fbf =  configItems['dd']['field_type']['fbf']
-
+  dt_fmt = '%Y-%m-%dT%H:%M:%S'
   datasets = ProfileDatasets.getBaseDatasets(sQobj, base_url,  mmdd_fbf)
+  print len(datasets)
   ds_profiles = ProfileDatasets.getCurrentDatasetProfiles(sQobj, base_url, ds_profiles_fbf )
   field_types = ProfileDatasets.getFieldTypes(sQobj, base_url, field_type_fbf)
-  dataset_info =  ProfileDatasets.buildInsertDatasetProfiles(sQobj, scrud, configItems, datasets, ds_profiles,  field_types)
+  dataset_info =  ProfileDatasets.buildInsertDatasetProfiles(sQobj, scrud, configItems, datasets, ds_profiles,  field_types, dt_fmt)
   print dataset_info
   if dataset_info['DatasetRecordsCnt'] > 1:
     dsse = JobStatusEmailerComposer(configItems, logger)
