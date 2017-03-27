@@ -336,18 +336,18 @@ class ProfileFields:
             field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
             if len(field_profile.keys()) > 1 :
               new_field_profiles.append(field_profile)
-          else:
-            print field
-            field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
-            if len(field_profile.keys()) > 1 :
-              new_field_profiles.append(field_profile)
+          #else:
+            #print field
+            #field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
+            #if len(field_profile.keys()) > 1 :
+            #  new_field_profiles.append(field_profile)
 
-        #else:
+        else:
         #  #if field['datasetid'] == 'aaxw-2cb8':
-        #  if field['columnid'] == 'aaxw-2cb8_street_name':
-        #    field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
-        #    print field_profile
-        #    print "*****"
+        if field['columnid'] == 'aaxw-2cb8_entitlement_approval':
+          field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
+          print field_profile
+          print "*****"
 
       if len(new_field_profiles) > 0:
         print "upserting"
@@ -355,8 +355,8 @@ class ProfileFields:
         dataset_info['SrcRecordsCnt'] = len(new_field_profiles)
         dataset_info = scrud.postDataToSocrata(dataset_info, new_field_profiles)
         print dataset_info
-      src_records = src_records + dataset_info['SrcRecordsCnt']
-      inserted_records = inserted_records + dataset_info['DatasetRecordsCnt']
+        src_records = src_records + dataset_info['SrcRecordsCnt']
+        inserted_records = inserted_records + dataset_info['DatasetRecordsCnt']
     dataset_info['SrcRecordsCnt'] = src_records
     dataset_info['DatasetRecordsCnt'] = inserted_records
     return dataset_info

@@ -38,14 +38,18 @@ baseUrl: https://data.sfgov.org/resource/
 
 
 dataset_name: Dataset Profiles
-row_id: datasetid
 
 
 dd:
   master_dd:
     fbf: 8zp7-ik63
+    row_id: columnid
   field_type:
     fbf: 8efc-aram
   ds_profiles:
     fbf: w6q6-i3uv
+    row_id: datasetid
+  field_profiles:
+    fbf: ekxv-883u
+    row_id: columnid
 
