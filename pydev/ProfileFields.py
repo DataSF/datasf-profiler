@@ -28,6 +28,7 @@ class ProfileFields:
       qry = '''%s%s?$query=SELECT %s as label WHERE %s IS NOT NULL GROUP BY %s ORDER BY %s ''' % (base_url, nbeId, fieldName, fieldName, fieldName, fieldName)
       results = sQobj.getQryFull(qry)
       if results:
+        print results
         df = PandasUtils.makeDfFromJson(results)
         items = list(df['label'])
         if fieldType != 'boolean':
@@ -320,8 +321,12 @@ class ProfileFields:
           stats[ProfileFields.pretty_name(x)] = round(lst.quantile(x),2)
           #find the middle 50% of values
         stats['iqr'] = round((stats['75%'] - stats['25%']),2)
-        stats['kurtosis'] = round(lst.kurt(),2)
+        stats['kurtosis'] = round(lst.kurt(skipna=True),2)
+        if math.isnan(stats['kurtosis']):
+          del stats['kurtosis']
         stats['skewness'] = round(lst.skew(),2)
+        if math.isnan(stats['skewness']):
+          del stats['skewness']
         #returns mean absolute deviation of the values for the requested axis
         stats['mean_absolute_deviation'] = round(lst.mad(),2)
         stats['median'] =  round(lst.median(),2)
@@ -342,7 +347,7 @@ class ProfileFields:
     row_id = configItems['dd']['field_profiles']['row_id']
     base_url =  configItems['baseUrl']
     profile_keys = current_field_profiles.keys()
-    field_chunks = ListUtils.makeChunks(master_dfList, 5)
+    field_chunks = ListUtils.makeChunks(master_dfList, 1)
     dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': field_profile_fbf, 'row_id': row_id}
     for chunk in field_chunks:
       new_field_profiles = []
@@ -360,9 +365,9 @@ class ProfileFields:
           print "*****"
           print field
           field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
+          print field_profile
           print "*****"
           new_field_profiles.append(field_profile)
-
       if len(new_field_profiles) > 0:
         dataset_info['DatasetRecordsCnt'] = 0
         dataset_info['SrcRecordsCnt'] = len(new_field_profiles)

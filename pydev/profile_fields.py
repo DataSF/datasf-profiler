@@ -66,8 +66,8 @@ def main():
   field_type_fbf =  configItems['dd']['field_type']['fbf']
 
   #dt_format = '%Y-%m-%dT%H:%M:%S.000'
-  load_mm_dd = ProfileFields.getBaseDatasetJson(sQobj, configItems,  mmdd_fbf)
-  #load_mm_dd  = True
+  #load_mm_dd = ProfileFields.getBaseDatasetJson(sQobj, configItems,  mmdd_fbf)
+  load_mm_dd  = True
   current_field_profiles = ProfileFields.getCurrentFieldProfiles(sQobj, base_url, field_profiles_fbf)
   #print "****current profiles*****"
   #print current_field_profiles
