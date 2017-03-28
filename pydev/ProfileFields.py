@@ -267,6 +267,7 @@ class ProfileFields:
 
   @staticmethod
   def getRange(myMin, myMax, field_type, dt_format=None):
+    print field_type
     '''returns the range of a field'''
     if field_type == 'numeric':
       return round( (float(myMax)-float(myMin)), 2)
@@ -281,6 +282,7 @@ class ProfileFields:
           myMax = DateUtils.strToDtObj(myMax, dt_format)
         except Exception,e :
           print str(e)
+          return ''
       return abs((myMax - myMin).days)
     return ''
 
