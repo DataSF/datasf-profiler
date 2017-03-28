@@ -208,13 +208,15 @@ class SocrataQueries:
                 results = self.getQry(fbf, qry)
             except Exception, e:
                 print str(e)
-                self._logger.info(str(e))
+                all_results = []
+                break
             try:
                 all_results =  all_results + results
             except Exception, e:
                 #self._logger.info(results)
                 #self._logger.info(str(e))
                 print str(e)
+                all_results = []
                 break
             offset = offset + 1000
         return all_results

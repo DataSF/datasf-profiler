@@ -121,7 +121,6 @@ class ProfileFields:
       if len(more_stats.keys()) > 0:
         field.update(more_stats)
     field['last_updt_dt'] = DateUtils.get_current_timestamp()
-    print field
     return field
 
   @staticmethod
@@ -196,14 +195,14 @@ class ProfileFields:
   def getUniqueness(cardinality_cnt, total):
     '''Uniqueness: percentage calculated as Cardinality divided by the total number of records '''
     if total != 0:
-      return round((cardinality_cnt/total) *100, 2)
+      return round((cardinality_cnt/total) *100, 3)
     return 0
 
   @staticmethod
   def getDistinctness(cardinality_cnt, actual_cnt):
     '''Distinctness: percentage calculated as Cardinality divided by Actual'''
     if actual_cnt != 0:
-      return round((cardinality_cnt/actual_cnt)*100, 2)
+      return round((cardinality_cnt/actual_cnt)*100, 3)
     return 0
 
   @staticmethod
@@ -284,22 +283,25 @@ class ProfileFields:
 
   @staticmethod
   def get_stats(sQobj, base_url, nbeId, fieldName, fieldType):
-    stats = {}
+
     def timeout_handler(signum, frame):   # Custom signal handler
       raise TimeoutException
 
     signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(9)
+    signal.alarm(15)
+    stats = {}
     results_obj = []
     if fieldType  == 'numeric':
       try:
         print "issuing qrys"
         qry_cols = '''%s as label WHERE %s IS NOT NULL ORDER BY %s''' % (fieldName, fieldName, fieldName)
         results_obj =  sQobj.pageThroughResultsSelect(nbeId, qry_cols)
-      except TimeoutException, e:
+      except Exception, e:
           print "time out! Numeric Field Stats- Qry too long to profile numeric"
           return stats
+      print results_obj
       if len(results_obj) > 0:
+        signal.alarm(0)
         results = [float(result['label']) for result in results_obj]
         lst = pd.Series(results)
         for x in np.array([0.05, 0.25, 0.5, 0.75, 0.95]):
@@ -340,8 +342,8 @@ class ProfileFields:
             if len(field_profile.keys()) > 1 :
               new_field_profiles.append(field_profile)
         else:
-          #if field['datasetid'] == 'vw6y-z8j6'
-          if field['columnid'] == 'vw6y-z8j6_supervisor_district':
+          if field['datasetid'] == 'vw6y-z8j6':
+          #if field['columnid'] == 'vw6y-z8j6_updated':
           #if field['columnid'] == '28my-4796_street_seg':
             print "*****"
             print field
@@ -350,11 +352,10 @@ class ProfileFields:
             new_field_profiles.append(field_profile)
 
       if len(new_field_profiles) > 0:
-        print "upserting"
         dataset_info['DatasetRecordsCnt'] = 0
         dataset_info['SrcRecordsCnt'] = len(new_field_profiles)
         dataset_info = scrud.postDataToSocrata(dataset_info, new_field_profiles)
-        print dataset_info
+        #print dataset_info
         src_records = src_records + dataset_info['SrcRecordsCnt']
         inserted_records = inserted_records + dataset_info['DatasetRecordsCnt']
     dataset_info['SrcRecordsCnt'] = src_records
