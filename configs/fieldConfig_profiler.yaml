@@ -8,11 +8,12 @@ pickle_data_dir: /home/ubuntu/datasf-profiler/pickled/datasets/
 wkbk_uploads_dir: /home/ubuntu/datasf-profiler/wkbk_uploads/
 inputConfigDir: /home/ubuntu/datasf-profiler/configs/
 
+mm_dd_json_fn: master_dd_fields.json
+
 
 #other yaml configs
 socrata_client_config_fname: socrata_config.yaml
-email_config_file: email_config_gmail.yaml
-
+email_config_file: email_config_server.yaml
 
 #file names
 exception_logfile: profiler_logs.txt
@@ -29,7 +30,7 @@ dataset_name_field: Socrata Dataset Name
 dataset_src_dir_field:  Dataset_Source_Dir
 dataset_src_fn_field: Dataset Source Filename
 base_url: data.sfgov.org
-job_name: Profile Dataset Fields
+job_name: Profile Fields
 
 #other stuff
 json_key: updt_fields
@@ -37,8 +38,7 @@ app_name: Profile Data Fields
 baseUrl: https://data.sfgov.org/resource/
 
 
-dataset_name: Dataset Profiles
-
+dataset_name: Field Profiles
 
 dd:
   master_dd:
@@ -52,4 +52,5 @@ dd:
   field_profiles:
     fbf: ekxv-883u
     row_id: columnid
+
 

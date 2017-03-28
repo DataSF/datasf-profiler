@@ -24,12 +24,15 @@ class ProfileFields:
   def get_field_lengths(sQobj, base_url, nbeId, fieldName, fieldType):
     minMax = {}
     isGeomField = re.findall('geometry', fieldType)
-    if fieldType != 'numeric' and (not(isGeomField)):
+    if fieldType != 'numeric' and (not(isGeomField)) and fieldType != 'blob':
       qry = '''%s%s?$query=SELECT %s as label WHERE %s IS NOT NULL GROUP BY %s ORDER BY %s ''' % (base_url, nbeId, fieldName, fieldName, fieldName, fieldName)
       results = sQobj.getQryFull(qry)
       df = PandasUtils.makeDfFromJson(results)
       items = list(df['label'])
-      items = [len(str(item.encode('utf-8'))) for item in items]
+      if fieldType != 'boolean':
+        items = [len(str(item.encode('utf-8'))) for item in items]
+      else:
+        items = [len(str(item)) for item in items]
       minMax['min_field_length'] = min(items)
       minMax['max_field_length'] = max(items)
       minMax['avg_field_length']  = round(np.mean(items),2)
@@ -37,7 +40,7 @@ class ProfileFields:
 
   @staticmethod
   def getBaseDatasetJson(sQobj, configItems, fbf):
-    qryCols = '''columnid, datasetid, nbeid, dataset_name, field_type, api_key, last_updt_dt_data WHERE privateordeleted != true ORDER BY datasetid, field_type '''
+    qryCols = '''columnid, datasetid, nbeid, dataset_name, field_type, api_key, last_updt_dt_data WHERE privateordeleted != true AND field_type !='blob' ORDER BY datasetid, field_type '''
     results_json = sQobj.pageThroughResultsSelect(fbf, qryCols)
     return FileUtils.write_json_object(results_json, configItems['pickle_data_dir'], configItems['mm_dd_json_fn'])
 
@@ -293,13 +296,13 @@ class ProfileFields:
     results_obj = []
     if fieldType  == 'numeric':
       try:
-        print "issuing qrys"
+        #print "issuing qrys"
         qry_cols = '''%s as label WHERE %s IS NOT NULL ORDER BY %s''' % (fieldName, fieldName, fieldName)
         results_obj =  sQobj.pageThroughResultsSelect(nbeId, qry_cols)
       except Exception, e:
           print "time out! Numeric Field Stats- Qry too long to profile numeric"
           return stats
-      print results_obj
+      #print results_obj
       if len(results_obj) > 0:
         signal.alarm(0)
         results = [float(result['label']) for result in results_obj]
@@ -330,9 +333,9 @@ class ProfileFields:
     row_id = configItems['dd']['field_profiles']['row_id']
     base_url =  configItems['baseUrl']
     profile_keys = current_field_profiles.keys()
-    field_chunks = ListUtils.makeChunks(master_dfList, 2)
+    field_chunks = ListUtils.makeChunks(master_dfList, 4)
     dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': field_profile_fbf, 'row_id': row_id}
-    for chunk in field_chunks:
+    for chunk in field_chunks[0:2]:
       new_field_profiles = []
       for field in chunk:
         field_profile = {}
@@ -342,14 +345,14 @@ class ProfileFields:
             if len(field_profile.keys()) > 1 :
               new_field_profiles.append(field_profile)
         else:
-          if field['datasetid'] == 'vw6y-z8j6':
-          #if field['columnid'] == 'vw6y-z8j6_updated':
-          #if field['columnid'] == '28my-4796_street_seg':
-            print "*****"
-            print field
-            field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
-            print "*****"
-            new_field_profiles.append(field_profile)
+          #if field['datasetid'] == 'vw6y-z8j6':
+          #if field['columnid'] == '2ehv-6arf_geom':
+          #if field['columnid'] == 'zfw6-95su_medium':
+          print "*****"
+          print field
+          field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
+          print "*****"
+          new_field_profiles.append(field_profile)
 
       if len(new_field_profiles) > 0:
         dataset_info['DatasetRecordsCnt'] = 0
