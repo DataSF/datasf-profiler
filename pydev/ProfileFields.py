@@ -301,7 +301,7 @@ class ProfileFields:
       raise TimeoutException
 
     signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(15)
+    signal.alarm(5)
     stats = {}
     results_obj = []
     if fieldType  == 'numeric':
@@ -339,6 +339,11 @@ class ProfileFields:
 
   @staticmethod
   def buildInsertFieldProfiles(sQobj, scrud, configItems, master_dfList, current_field_profiles):
+    def timeout_handler(signum, frame):   # Custom signal handler
+      raise TimeoutException
+
+    signal.signal(signal.SIGALRM, timeout_handler)
+
     src_records = 0
     inserted_records = 0
     dt_fmt = '%Y-%m-%dT%H:%M:%S'
@@ -365,14 +370,20 @@ class ProfileFields:
           print "*****"
           print field
           field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
-          print
-          print field_profile
+          #print
+          #print field_profile
           print "*****"
           new_field_profiles.append(field_profile)
       if len(new_field_profiles) > 0:
         dataset_info['DatasetRecordsCnt'] = 0
         dataset_info['SrcRecordsCnt'] = len(new_field_profiles)
-        dataset_info = scrud.postDataToSocrata(dataset_info, new_field_profiles)
+        signal.alarm(5)
+        try:
+          dataset_info = scrud.postDataToSocrata(dataset_info, new_field_profiles)
+        except:
+          print "upload took too long"
+        else:
+          signal.alarm(0)
         #print dataset_info
         src_records = src_records + dataset_info['SrcRecordsCnt']
         inserted_records = inserted_records + dataset_info['DatasetRecordsCnt']
