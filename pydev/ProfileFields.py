@@ -41,7 +41,7 @@ class ProfileFields:
 
   @staticmethod
   def getBaseDatasetJson(sQobj, configItems, fbf):
-    qryCols = '''columnid, datasetid, nbeid, dataset_name, field_type, api_key, last_updt_dt_data WHERE privateordeleted != true AND field_type !='blob' ORDER BY datasetid, field_type '''
+    qryCols = '''columnid, datasetid, nbeid, dataset_name, field_type, api_key, last_updt_dt_data WHERE privateordeleted != true AND field_type !='blob' AND (nbeid is not null or nbeid != '') ORDER BY datasetid, field_type '''
     results_json = sQobj.pageThroughResultsSelect(fbf, qryCols)
     return FileUtils.write_json_object(results_json, configItems['pickle_data_dir'], configItems['mm_dd_json_fn'])
 
