@@ -84,18 +84,18 @@ class ProfileFields:
     field['is_primary_key_candidate'] = ProfileFields.isPrimaryKeyCandidate(field['uniqueness'], field['completeness'])
     #print "is_primary_key_candidate: " + str(field['is_primary_key_candidate'])
 
-    field['max'] = ProfileFields.getMax(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
+    field['max_value'] = str(ProfileFields.getMax(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type']))
     #print "max: " + str(field['max'])
-    field['min'] = ProfileFields.getMin(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
+    field['min_value'] = str(ProfileFields.getMin(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type']))
     #print "min: " + str( field['min'])
     field['mode'] = ProfileFields.getMode(sQobj, field['base_url'], field['nbeid'], field['api_key'])
     #print "mode: " + str( field['mode'])
 
     if field['field_type'] == 'timestamp':
-      field['range'] = ProfileFields.getRange(field['min'], field['max'], field['field_type'], dt_format)
+      field['range'] = ProfileFields.getRange(field['min_value'], field['max_value'], field['field_type'], dt_format)
       #print "range: " + str(field['range'])
     else:
-      field['range'] = ProfileFields.getRange(field['min'], field['max'], field['field_type'])
+      field['range'] = ProfileFields.getRange(field['min_value'], field['max_value'], field['field_type'])
       #print "range: " + str(field['range'])
 
     minMaxLens = ProfileFields.get_field_lengths(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
@@ -224,8 +224,8 @@ class ProfileFields:
   def getMax(sQobj, base_url, nbeId, fieldName, field_type):
     '''gets max for field- can work on text and numeric fields'''
     #https://data.sfgov.org/resource/e2px-wugd.json?$select=max(project_units) as value
+    qry = '''%s%s.json?$select=max(%s) as value WHERE %s IS NOT NULL''' % (base_url, nbeId, fieldName, fieldName )
     if field_type != 'text':
-      qry = '''%s%s.json?$select=max(%s) as value WHERE %s IS NOT NULL''' % (base_url, nbeId, fieldName, fieldName )
       return ProfileFields.getResults(sQobj, qry)
     return ''
 
@@ -233,8 +233,8 @@ class ProfileFields:
   def getMin(sQobj, base_url, nbeId, fieldName, field_type):
     '''gets max for field- can work on text and numeric fields'''
     #https://data.sfgov.org/resource/e2px-wugd.json?$select=mix(project_units) as value
+    qry = '''%s%s.json?$select=min(%s) as value WHERE %s IS NOT NULL''' % (base_url, nbeId, fieldName, fieldName )
     if field_type != 'text':
-      qry = '''%s%s.json?$select=min(%s) as value WHERE %s IS NOT NULL''' % (base_url, nbeId, fieldName, fieldName)
       return ProfileFields.getResults(sQobj, qry)
     return ''
 
@@ -320,7 +320,6 @@ class ProfileFields:
     inserted_records = 0
     dt_fmt = '%Y-%m-%dT%H:%M:%S'
     dt_fmt_fields = '%Y-%m-%dT%H:%M:%S.000'
-    #mmdd_fbf = configItems['dd']['master_dd']['fbf']
     field_profile_fbf =  configItems['dd']['field_profiles']['fbf']
     row_id = configItems['dd']['field_profiles']['row_id']
     base_url =  configItems['baseUrl']
@@ -336,19 +335,15 @@ class ProfileFields:
             field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
             if len(field_profile.keys()) > 1 :
               new_field_profiles.append(field_profile)
-          #else:
-            #print field
-            #field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
-            #if len(field_profile.keys()) > 1 :
-            #  new_field_profiles.append(field_profile)
-
         else:
-        #  #if field['datasetid'] == 'aaxw-2cb8':
-        if field['columnid'] == 'aaxw-2cb8_entitlement_approval':
-          field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
-          print field_profile
-          print "*****"
-
+          if field['datasetid'] == 'aaxw-2cb8':
+            if field['columnid'] == 'aaxw-2cb8_issuance_of_building_permit':
+              print "in here"
+              print
+              field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
+              print field_profile
+              print "*****"
+              new_field_profiles.append(field_profile)
       if len(new_field_profiles) > 0:
         print "upserting"
         dataset_info['DatasetRecordsCnt'] = 0
