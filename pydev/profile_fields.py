@@ -11,6 +11,7 @@ from ProfileFields import *
 from Utils import *
 from JobStatusEmailerComposer import *
 
+
 def parse_opts():
   helpmsgConfigFile = 'Use the -c to add a config yaml file. EX: fieldConfig.yaml'
   parser = OptionParser(usage='usage: %prog [options] ')
@@ -29,7 +30,7 @@ def parse_opts():
 
   (options, args) = parser.parse_args()
 
-  if  options.configFn is None:
+  if options.configFn is None:
     print "ERROR: You must specify a config yaml file!"
     print helpmsgConfigFile
     exit(1)
@@ -44,8 +45,8 @@ def parse_opts():
   return fieldConfigFile, config_inputdir
 
 
-
 def main():
+
   fieldConfigFile, config_inputdir = parse_opts()
   cI =  ConfigUtils(config_inputdir,fieldConfigFile  )
   configItems = cI.getConfigs()

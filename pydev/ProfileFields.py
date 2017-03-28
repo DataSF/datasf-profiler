@@ -7,8 +7,12 @@ from PandasUtils import *
 import numpy as np
 import pandas as pd
 import re
+import signal
+
+
 
 class ProfileFields:
+
 
   @staticmethod
   def getCurrentFieldProfiles(sQobj, base_url, fbf ):
@@ -83,8 +87,6 @@ class ProfileFields:
     #print "distinctness: " + str(field['distinctness'])
     field['is_primary_key_candidate'] = ProfileFields.isPrimaryKeyCandidate(field['uniqueness'], field['completeness'])
     #print "is_primary_key_candidate: " + str(field['is_primary_key_candidate'])
-
-
     isGeomField = re.findall('geometry',  field['field_type'])
     if (not(isGeomField)) and field['field_type'] != 'boolean':
       field['min_value'] = str(ProfileFields.getMin(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type']))
@@ -113,24 +115,14 @@ class ProfileFields:
       #print "std_dev: " + str(field['std_dev'])
       field['variance'] = ProfileFields.getVariance(field['standard_deviation'])
       #print "variance: " + str(field['variance'])
+      #  print "getting stats"
       more_stats = ProfileFields.get_stats(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
+      #  print more_stats
       if len(more_stats.keys()) > 0:
         field.update(more_stats)
     field['last_updt_dt'] = DateUtils.get_current_timestamp()
     print field
     return field
-
-  def profileFields(configItems, master_dfList):
-    for field in master_dfList:
-      if field['datasetid'] == 'aaxw-2cb8':
-        print
-        print field['api_key']
-        if field['columnid']== 'aaxw-2cb8__80_ami' or field['columnid'] == 'aaxw-2cb8_location':
-          field_stats = ProfileFields.profileField(sQobj,field, dt_format)
-          load_list.append(field_stats)
-    print load_list
-    cool = FileUtils.write_wkbk_csv('intitial_load.csv', load_list, load_list[0].keys())
-    print cool
 
   @staticmethod
   def getTotal(sQobj, base_url, nbeId):
@@ -289,27 +281,41 @@ class ProfileFields:
     else:
         return '%.1f%%' % x
 
+
   @staticmethod
   def get_stats(sQobj, base_url, nbeId, fieldName, fieldType):
     stats = {}
+    def timeout_handler(signum, frame):   # Custom signal handler
+      raise TimeoutException
+
+    signal.signal(signal.SIGALRM, timeout_handler)
+    signal.alarm(9)
+    results_obj = []
     if fieldType  == 'numeric':
-      qry_cols = '''%s as label WHERE %s IS NOT NULL ORDER BY %s''' % (fieldName, fieldName, fieldName)
-      results_obj =  sQobj.pageThroughResultsSelect(nbeId, qry_cols)
-      results = [float(result['label']) for result in results_obj]
-      lst = pd.Series(results)
-      for x in np.array([0.05, 0.25, 0.5, 0.75, 0.95]):
-        stats[ProfileFields.pretty_name(x)] = round(lst.quantile(x),2)
-      #find the middle 50% of values
-      stats['iqr'] = round((stats['75%'] - stats['25%']),2)
-      stats['kurtosis'] = round(lst.kurt(),2)
-      stats['skewness'] = round(lst.skew(),2)
-      #returns mean absolute deviation of the values for the requested axis
-      stats['mean_absolute_deviation'] = round(lst.mad(),2)
-      stats['median'] =  round(lst.median(),2)
-      results_str =  [ len(result['label']) for result in results_obj]
-      stats['min_field_length'] = min(results_str)
-      stats['max_field_length'] = max(results_str)
-      stats['avg_field_length']  = round(np.mean(results_str),2)
+      try:
+        print "issuing qrys"
+        qry_cols = '''%s as label WHERE %s IS NOT NULL ORDER BY %s''' % (fieldName, fieldName, fieldName)
+        results_obj =  sQobj.pageThroughResultsSelect(nbeId, qry_cols)
+      except TimeoutException, e:
+          print "time out! Numeric Field Stats- Qry too long to profile numeric"
+          return stats
+      if len(results_obj) > 0:
+        results = [float(result['label']) for result in results_obj]
+        lst = pd.Series(results)
+        for x in np.array([0.05, 0.25, 0.5, 0.75, 0.95]):
+          stats[ProfileFields.pretty_name(x)] = round(lst.quantile(x),2)
+          #find the middle 50% of values
+        stats['iqr'] = round((stats['75%'] - stats['25%']),2)
+        stats['kurtosis'] = round(lst.kurt(),2)
+        stats['skewness'] = round(lst.skew(),2)
+        #returns mean absolute deviation of the values for the requested axis
+        stats['mean_absolute_deviation'] = round(lst.mad(),2)
+        stats['median'] =  round(lst.median(),2)
+        results_str =  [ len(result['label']) for result in results_obj]
+        stats['min_field_length'] = min(results_str)
+        stats['max_field_length'] = max(results_str)
+        stats['avg_field_length']  = round(np.mean(results_str),2)
+        return stats
     return stats
 
   @staticmethod
@@ -322,7 +328,7 @@ class ProfileFields:
     row_id = configItems['dd']['field_profiles']['row_id']
     base_url =  configItems['baseUrl']
     profile_keys = current_field_profiles.keys()
-    field_chunks = ListUtils.makeChunks(master_dfList, 4)
+    field_chunks = ListUtils.makeChunks(master_dfList, 2)
     dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': field_profile_fbf, 'row_id': row_id}
     for chunk in field_chunks:
       new_field_profiles = []
@@ -334,10 +340,12 @@ class ProfileFields:
             if len(field_profile.keys()) > 1 :
               new_field_profiles.append(field_profile)
         else:
-          if field['datasetid'] == 'vw6y-z8j6':
+          #if field['datasetid'] == 'vw6y-z8j6'
+          if field['columnid'] == 'vw6y-z8j6_supervisor_district':
+          #if field['columnid'] == '28my-4796_street_seg':
+            print "*****"
             print field
             field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
-            print field_profile
             print "*****"
             new_field_profiles.append(field_profile)
 

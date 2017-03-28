@@ -29,6 +29,7 @@ class PandasUtils:
         dictMapped[ item[fieldColKey] ] = item[fieldColValue]
     return dictMapped
 
+
   @staticmethod
   def removeCols(df, list_of_cols_to_remove):
     '''removes cols inplace'''

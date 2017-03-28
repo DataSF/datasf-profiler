@@ -29,7 +29,6 @@ import errno
 from ConfigUtils import *
 from Utils import *
 
-
 class SocrataClient:
     def __init__(self, inputdir, configItems, logger):
         self.inputdir = inputdir
@@ -195,12 +194,15 @@ class SocrataQueries:
             return None
 
     def pageThroughResultsSelect(self, fbf, qry_cols):
-        row_cnt = self.getRowCnt(fbf)
         returned_records = 0
         offset = 0
         all_results = []
+        row_cnt = self.getRowCnt(fbf)
+        limit = 1000
+        if row_cnt > 1000000:
+            limit = 10000
         while offset < row_cnt:
-            limit_offset = "&$limit=1000&$offset="+ str(offset)
+            limit_offset = "&$limit=%s&$offset=" % (limit) + str(offset)
             qry = '?$select='+qry_cols+ limit_offset
             try:
                 results = self.getQry(fbf, qry)
@@ -210,9 +212,8 @@ class SocrataQueries:
             try:
                 all_results =  all_results + results
             except Exception, e:
-                print results
-                self._logger.info(results)
-                self._logger.info(str(e))
+                #self._logger.info(results)
+                #self._logger.info(str(e))
                 print str(e)
                 break
             offset = offset + 1000
@@ -224,6 +225,9 @@ class SocrataQueries:
         dataset[self.rowsInserted] = 0
         dataset[self.src_records_cnt_field] = 0
         return dataset
+
+
+
 
 if __name__ == "__main__":
     main()
