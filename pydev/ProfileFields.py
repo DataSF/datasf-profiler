@@ -27,15 +27,16 @@ class ProfileFields:
     if fieldType != 'numeric' and (not(isGeomField)) and fieldType != 'blob':
       qry = '''%s%s?$query=SELECT %s as label WHERE %s IS NOT NULL GROUP BY %s ORDER BY %s ''' % (base_url, nbeId, fieldName, fieldName, fieldName, fieldName)
       results = sQobj.getQryFull(qry)
-      df = PandasUtils.makeDfFromJson(results)
-      items = list(df['label'])
-      if fieldType != 'boolean':
-        items = [len(str(item.encode('utf-8'))) for item in items]
-      else:
-        items = [len(str(item)) for item in items]
-      minMax['min_field_length'] = min(items)
-      minMax['max_field_length'] = max(items)
-      minMax['avg_field_length']  = round(np.mean(items),2)
+      if results:
+        df = PandasUtils.makeDfFromJson(results)
+        items = list(df['label'])
+        if fieldType != 'boolean':
+          items = [len(str(item.encode('utf-8'))) for item in items]
+        else:
+          items = [len(str(item)) for item in items]
+        minMax['min_field_length'] = min(items)
+        minMax['max_field_length'] = max(items)
+        minMax['avg_field_length']  = round(np.mean(items),2)
     return minMax
 
   @staticmethod
@@ -333,7 +334,7 @@ class ProfileFields:
     row_id = configItems['dd']['field_profiles']['row_id']
     base_url =  configItems['baseUrl']
     profile_keys = current_field_profiles.keys()
-    field_chunks = ListUtils.makeChunks(master_dfList, 4)
+    field_chunks = ListUtils.makeChunks(master_dfList, 1)
     dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': field_profile_fbf, 'row_id': row_id}
     for chunk in field_chunks:
       new_field_profiles = []
