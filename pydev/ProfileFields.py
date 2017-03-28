@@ -335,7 +335,7 @@ class ProfileFields:
     profile_keys = current_field_profiles.keys()
     field_chunks = ListUtils.makeChunks(master_dfList, 4)
     dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': field_profile_fbf, 'row_id': row_id}
-    for chunk in field_chunks[0:2]:
+    for chunk in field_chunks:
       new_field_profiles = []
       for field in chunk:
         field_profile = {}
