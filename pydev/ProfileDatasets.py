@@ -147,6 +147,8 @@ class ProfileDatasets:
     dataset_stats['days_since_last_updated'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['last_updt_dt_data'], dt_fmt)
     dataset_stats['days_since_first_created'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['created_date'], dt_fmt)
     dataset_stats = DictUtils.filterDictOnBlanks(dataset_stats)
+    dataset_stats = DictUtils.filterDictOnNans(dataset_stats)
+
     return  dataset_stats
 
   @staticmethod
