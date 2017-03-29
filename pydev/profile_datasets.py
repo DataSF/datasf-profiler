@@ -64,20 +64,27 @@ def main():
   ds_profiles_fbf =  configItems['dd']['ds_profiles']['fbf']
   base_url =  configItems['baseUrl']
   field_type_fbf =  configItems['dd']['field_type']['fbf']
-  dt_fmt = '%Y-%m-%dT%H:%M:%S'
+  asset_inventory_fbf =  configItems['dd']['asset_inventory']['fbf']
+
   datasets = ProfileDatasets.getBaseDatasets(sQobj, base_url,  mmdd_fbf)
-  print len(datasets)
+
+  asset_inventory_dict = ProfileDatasets.getAssetInventoryInfo(sQobj, base_url,  asset_inventory_fbf)
+
   ds_profiles = ProfileDatasets.getCurrentDatasetProfiles(sQobj, base_url, ds_profiles_fbf )
+
   field_types = ProfileDatasets.getFieldTypes(sQobj, base_url, field_type_fbf)
-  dataset_info =  ProfileDatasets.buildInsertDatasetProfiles(sQobj, scrud, configItems, datasets, ds_profiles,  field_types, dt_fmt)
+  print field_types
+  dataset_info =  ProfileDatasets.buildInsertDatasetProfiles(sQobj, scrud, configItems, datasets, ds_profiles,  field_types, asset_inventory_dict)
   print dataset_info
-  if dataset_info['DatasetRecordsCnt'] > 1:
-    dsse = JobStatusEmailerComposer(configItems, logger)
-    dsse.sendJobStatusEmail([dataset_info])
-  else:
-    dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': "Nothing to Insert"}
-    dataset_info['isLoaded'] = 'success'
-    dsse.sendJobStatusEmail([dataset_info])
+
+  #print dataset_info
+  #if dataset_info['DatasetRecordsCnt'] > 1:
+  #  dsse = JobStatusEmailerComposer(configItems, logger)
+  #  dsse.sendJobStatusEmail([dataset_info])
+  #else:
+  #  dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': "Nothing to Insert"}
+  #  dataset_info['isLoaded'] = 'success'
+  #  dsse.sendJobStatusEmail([dataset_info])
 
 
 

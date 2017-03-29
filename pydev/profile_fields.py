@@ -65,34 +65,22 @@ def main():
   base_url =  configItems['baseUrl']
   field_type_fbf =  configItems['dd']['field_type']['fbf']
 
-  #dt_format = '%Y-%m-%dT%H:%M:%S.000'
+
   load_mm_dd = ProfileFields.getBaseDatasetJson(sQobj, configItems,  mmdd_fbf)
+  #print load_mm_dd
   #load_mm_dd  = True
   current_field_profiles = ProfileFields.getCurrentFieldProfiles(sQobj, base_url, field_profiles_fbf)
   #print "****current profiles*****"
   #print current_field_profiles
   if load_mm_dd :
     master_dfList = ProfileFields.get_dataset_as_dfList(configItems['pickle_data_dir'], configItems['mm_dd_json_fn'], base_url)
-    #print master_dfList[0]
+    print master_dfList[0]
     dataset_info = ProfileFields.buildInsertFieldProfiles(sQobj, scrud, configItems, master_dfList, current_field_profiles)
     print dataset_info
-    #dsse = JobStatusEmailerComposer(configItems, logger)
-    #dsse.sendJobStatusEmail([dataset_info])
+    dsse = JobStatusEmailerComposer(configItems, logger)
+    dsse.sendJobStatusEmail([dataset_info])
 
 
-
-  #field_profiles = ProfileDatasets.getCurrentFieldProfiles(sQobj, base_url, field_profiles_fbf )
-  #field_types = ProfileDatasets.getFieldTypes(sQobj, base_url, field_type_fbf)
-  #datasets_stats =  ProfileDatasets.buildInsertDatasetProfiles(sQobj,  datasets, ds_profiles, mmdd_fbf, field_types)
-  #if len(datasets_stats)> 1:
-  #  dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':len(datasets_stats), 'DatasetRecordsCnt':0, 'fourXFour': ds_profiles_fbf, 'row_id': configItems['row_id']}
-  #  dataset_info = scrud.postDataToSocrata(dataset_info, datasets_stats)
-  #  dsse = JobStatusEmailerComposer(configItems, logger)
-  #  dsse.sendJobStatusEmail([dataset_info])
-  #else:
-  #  dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': "Nothing to Insert"}
-  #  dataset_info['isLoaded'] = 'success'
-  #  dsse.sendJobStatusEmail([dataset_info])
 
 
 

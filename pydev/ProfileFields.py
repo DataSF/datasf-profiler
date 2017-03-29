@@ -8,7 +8,8 @@ import numpy as np
 import pandas as pd
 import re
 import signal
-
+from DictUtils import *
+from ProfileDatasets import *
 
 
 class ProfileFields:
@@ -16,9 +17,9 @@ class ProfileFields:
 
   @staticmethod
   def getCurrentFieldProfiles(sQobj, base_url, fbf ):
-    qry =  '''%s%s.json?$query=SELECT columnid, last_updt_dt''' % (base_url, fbf)
-    dictList = PandasUtils.resultsToDictList(sQobj, qry)
-    return PandasUtils.getDictListAsMappedDict('columnid', 'last_updt_dt', dictList)
+    qryCols = '''columnid, profile_last_updt_dt'''
+    results =  sQobj.pageThroughResultsSelect(fbf, qryCols)
+    return PandasUtils.getDictListAsMappedDict('columnid', 'profile_last_updt_dt', results)
 
   @staticmethod
   def get_field_lengths(sQobj, base_url, nbeId, fieldName, fieldType):
@@ -41,7 +42,8 @@ class ProfileFields:
 
   @staticmethod
   def getBaseDatasetJson(sQobj, configItems, fbf):
-    qryCols = '''columnid, datasetid, nbeid, dataset_name, field_type, api_key, last_updt_dt_data WHERE privateordeleted != true AND field_type !='blob' AND (nbeid is not null or nbeid != '') ORDER BY datasetid, field_type '''
+    qryCols = '''columnid, datasetid, nbeid, dataset_name, field_type, field_name, field_alias,  api_key, department, last_updt_dt_data, global_field  WHERE privateordeleted != true AND field_type !='blob' AND (nbeid is not null or nbeid != '') ORDER BY datasetid, field_type '''
+    print qryCols
     results_json = sQobj.pageThroughResultsSelect(fbf, qryCols)
     return FileUtils.write_json_object(results_json, configItems['pickle_data_dir'], configItems['mm_dd_json_fn'])
 
@@ -109,7 +111,6 @@ class ProfileFields:
       minMaxLens = ProfileFields.get_field_lengths(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
       if len(minMaxLens.keys()) > 0:
           field.update(minMaxLens)
-
     if field['field_type'] == 'numeric':
       field['mean'] = ProfileFields.getMean(sQobj, field['base_url'], field['nbeid'], field['api_key'])
       #print "average: " + str(field['average'])
@@ -125,6 +126,10 @@ class ProfileFields:
       if len(more_stats.keys()) > 0:
         field.update(more_stats)
     field['last_updt_dt'] = DateUtils.get_current_timestamp()
+    dt_fmt = '%Y-%m-%dT%H:%M:%S'
+    field['days_since_last_updated'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(field['last_updt_dt_data'], dt_fmt)
+    field = DictUtils.filterDictOnBlanks(field)
+    field = DictUtils.filterDictOnNans(field)
     return field
 
   @staticmethod
@@ -322,11 +327,11 @@ class ProfileFields:
           #find the middle 50% of values
         stats['iqr'] = round((stats['75%'] - stats['25%']),2)
         stats['kurtosis'] = round(lst.kurt(skipna=True),2)
-        if math.isnan(stats['kurtosis']):
-          del stats['kurtosis']
-        stats['skewness'] = round(lst.skew(),2)
-        if math.isnan(stats['skewness']):
-          del stats['skewness']
+        #if math.isnan(stats['kurtosis']):
+        #  del stats['kurtosis']
+        #stats['skewness'] = round(lst.skew(),2)
+        #if math.isnan(stats['skewness']):
+        #  del stats['skewness']
         #returns mean absolute deviation of the values for the requested axis
         stats['mean_absolute_deviation'] = round(lst.mad(),2)
         stats['median'] =  round(lst.median(),2)
@@ -338,12 +343,18 @@ class ProfileFields:
     return stats
 
   @staticmethod
+  def updtDaysSinceLastUpdt(field):
+    field_ = {'columnid': field['columnid']}
+    dt_fmt = '%Y-%m-%dT%H:%M:%S'
+    field_['days_since_last_updated'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(field['last_updt_dt_data'], dt_fmt)
+    return field_
+
+  @staticmethod
   def buildInsertFieldProfiles(sQobj, scrud, configItems, master_dfList, current_field_profiles):
     def timeout_handler(signum, frame):   # Custom signal handler
       raise TimeoutException
 
     signal.signal(signal.SIGALRM, timeout_handler)
-
     src_records = 0
     inserted_records = 0
     dt_fmt = '%Y-%m-%dT%H:%M:%S'
@@ -361,18 +372,14 @@ class ProfileFields:
         if field['columnid'] in profile_keys:
           if ( not ( DateUtils.compare_two_timestamps( current_field_profiles[field['columnid']],  field['last_updt_dt_data'], dt_fmt , dt_fmt ))):
             field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
-            if len(field_profile.keys()) > 1 :
-              new_field_profiles.append(field_profile)
+          else:
+            field_profile =  ProfileFields.updtDaysSinceLastUpdt(field)
+          new_field_profiles.append(field_profile)
         else:
-          #if field['datasetid'] == 'vw6y-z8j6':
-          #if field['columnid'] == '2ehv-6arf_geom':
-          #if field['columnid'] == 'zfw6-95su_medium':
           print "*****"
           print field
           field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
-          #print
-          #print field_profile
-          print "*****"
+          print
           new_field_profiles.append(field_profile)
       if len(new_field_profiles) > 0:
         dataset_info['DatasetRecordsCnt'] = 0
@@ -384,7 +391,7 @@ class ProfileFields:
           print "upload took too long"
         else:
           signal.alarm(0)
-        #print dataset_info
+        print dataset_info
         src_records = src_records + dataset_info['SrcRecordsCnt']
         inserted_records = inserted_records + dataset_info['DatasetRecordsCnt']
     dataset_info['SrcRecordsCnt'] = src_records

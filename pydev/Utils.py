@@ -19,6 +19,8 @@ import datetime
 import collections
 import os.path
 import json
+import time
+
 
 class DateUtils:
     @staticmethod
@@ -55,8 +57,18 @@ class DateUtils:
         return False
 
     @staticmethod
+    def days_between(d1, dt_fmt1, d2, dt_fmt2):
+        d1 = datetime.datetime.strptime(d1, dt_fmt1)
+        d2 = datetime.datetime.strptime(d2, dt_fmt2)
+        return abs((d2 - d1).days)
+
+    @staticmethod
     def strToDtObj(strTime, dt_format):
         return  datetime.datetime.strptime(strTime, dt_format)
+
+    @staticmethod
+    def convertEpochToStrTime(epoch_time, dt_format):
+        return time.strftime(dt_format, time.localtime(epoch_time))
 
 class PickleUtils:
     @staticmethod

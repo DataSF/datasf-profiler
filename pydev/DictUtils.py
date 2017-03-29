@@ -63,9 +63,15 @@ class DictUtils:
     return {k: v for k, v in some_dict.items() if not(DictUtils.is_blank(v))}
 
   @staticmethod
-  def consolidateDictList(someDictList, keyToKeep):
-    '''returns a list of items based on a key'''
-    return [ item[keyToKeep] for item in someDictList]
+  def merge_two_dicts(x, y):
+    """Given two dicts, merge them into a new dict as a shallow copy."""
+    z = x.copy()
+    z.update(y)
+    return z
+
+  @staticmethod
+  def consolidateDictList(results, key):
+    return [result[key] for result in results ]
 
 if __name__ == "__main__":
     main()
