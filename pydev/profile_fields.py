@@ -74,11 +74,10 @@ def main():
   #print current_field_profiles
   if load_mm_dd :
     master_dfList = ProfileFields.get_dataset_as_dfList(configItems['pickle_data_dir'], configItems['mm_dd_json_fn'], base_url)
-    print master_dfList[0]
     dataset_info = ProfileFields.buildInsertFieldProfiles(sQobj, scrud, configItems, master_dfList, current_field_profiles)
-    print dataset_info
-    dsse = JobStatusEmailerComposer(configItems, logger)
-    dsse.sendJobStatusEmail([dataset_info])
+    #print dataset_info
+    #dsse = JobStatusEmailerComposer(configItems, logger)
+    #dsse.sendJobStatusEmail([dataset_info])
 
 
 

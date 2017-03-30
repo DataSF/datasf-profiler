@@ -43,7 +43,6 @@ class ProfileFields:
   @staticmethod
   def getBaseDatasetJson(sQobj, configItems, fbf):
     qryCols = '''columnid, datasetid, nbeid, dataset_name, field_type, field_name, field_alias,  api_key, department, last_updt_dt_data, global_field  WHERE privateordeleted != true AND field_type !='blob' AND (nbeid is not null or nbeid != '') ORDER BY datasetid, field_type '''
-    print qryCols
     results_json = sQobj.pageThroughResultsSelect(fbf, qryCols)
     return FileUtils.write_json_object(results_json, configItems['pickle_data_dir'], configItems['mm_dd_json_fn'])
 
@@ -120,7 +119,6 @@ class ProfileFields:
       #print "std_dev: " + str(field['std_dev'])
       field['variance'] = ProfileFields.getVariance(field['standard_deviation'])
       #print "variance: " + str(field['variance'])
-      #  print "getting stats"
       more_stats = ProfileFields.get_stats(sQobj, field['base_url'], field['nbeid'], field['api_key'], field['field_type'])
       #  print more_stats
       if len(more_stats.keys()) > 0:
@@ -294,9 +292,9 @@ class ProfileFields:
   def pretty_name(x):
     x *= 100
     if x == int(x):
-        return '%.0f%%' % x
+        return '_%.0f' % x
     else:
-        return '%.1f%%' % x
+        return '_%.1f' % x
 
 
   @staticmethod
@@ -306,7 +304,7 @@ class ProfileFields:
       raise TimeoutException
 
     signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(5)
+    signal.alarm(7)
     stats = {}
     results_obj = []
     if fieldType  == 'numeric':
@@ -325,13 +323,8 @@ class ProfileFields:
         for x in np.array([0.05, 0.25, 0.5, 0.75, 0.95]):
           stats[ProfileFields.pretty_name(x)] = round(lst.quantile(x),2)
           #find the middle 50% of values
-        stats['iqr'] = round((stats['75%'] - stats['25%']),2)
+        stats['iqr'] = round((stats['_75'] - stats['_25']),2)
         stats['kurtosis'] = round(lst.kurt(skipna=True),2)
-        #if math.isnan(stats['kurtosis']):
-        #  del stats['kurtosis']
-        #stats['skewness'] = round(lst.skew(),2)
-        #if math.isnan(stats['skewness']):
-        #  del stats['skewness']
         #returns mean absolute deviation of the values for the requested axis
         stats['mean_absolute_deviation'] = round(lst.mad(),2)
         stats['median'] =  round(lst.median(),2)
@@ -363,7 +356,7 @@ class ProfileFields:
     row_id = configItems['dd']['field_profiles']['row_id']
     base_url =  configItems['baseUrl']
     profile_keys = current_field_profiles.keys()
-    field_chunks = ListUtils.makeChunks(master_dfList[0:10], 5)
+    field_chunks = ListUtils.makeChunks(master_dfList, 50)
     dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': field_profile_fbf, 'row_id': row_id}
     for chunk in field_chunks:
       new_field_profiles = []
@@ -371,14 +364,20 @@ class ProfileFields:
         field_profile = {}
         if field['columnid'] in profile_keys:
           if ( not ( DateUtils.compare_two_timestamps( current_field_profiles[field['columnid']],  field['last_updt_dt_data'], dt_fmt , dt_fmt ))):
+            print "**** updated field****"
+            print field
             field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
+            print field_profile
           else:
+            #print "***updating date"
             field_profile =  ProfileFields.updtDaysSinceLastUpdt(field)
+            #print field_profile
           new_field_profiles.append(field_profile)
         else:
-          print "*****"
+          print "**** new field****"
           print field
           field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
+          print field_profile
           print
           new_field_profiles.append(field_profile)
       if len(new_field_profiles) > 0:
@@ -391,7 +390,7 @@ class ProfileFields:
           print "upload took too long"
         else:
           signal.alarm(0)
-        print dataset_info
+        #print dataset_info
         src_records = src_records + dataset_info['SrcRecordsCnt']
         inserted_records = inserted_records + dataset_info['DatasetRecordsCnt']
     dataset_info['SrcRecordsCnt'] = src_records
