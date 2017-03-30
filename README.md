@@ -1,6 +1,6 @@
 # DataSF Profiler
 
-## Why do data profiling?
+## Why Do Data Profiling?
 * Data profiling helps us make an assessment of data quality
 * It assists in the discovery of anomalies within the data
 * It helps users understand content, structure, relationship, etc about the data we are working with
