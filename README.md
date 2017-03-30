@@ -7,7 +7,7 @@
 * It surfaces issues/problems that we might run into before we start working with the data
 * It helps us assess and validate metadata
 
-## Using this tool, DataSF can monitoring the following data quality metrics on their open data portal:
+## Using this tool, DataSF can monitor the following data quality metrics on their open data portal:
 * Completeness
 * Validity
 * Timeliness
@@ -16,7 +16,7 @@
 * Accuracy
 
 ## Types of Data Profiling Analysis That DataSF Profiler performs
-Data can be profiled both the dataset level and at the column level. Below outlines the types of analysis that the profiling tool conducts
+Data can be profiled both the dataset level and at the field level. Below outlines the types of analysis that the profiling tool conducts
 
 ### Dataset Level Analysis
 * Total number of records- the total number of records in a dataset
