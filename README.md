@@ -23,11 +23,13 @@ Data can be profiled both the dataset level and at the field level. Below outlin
 * Total Number of Fields - The total number of fields in a dataset
 * Field Type Counts -  For each field type the number of fields that are of that type
 * Number of Duplicates - The number of row level duplicates- aka rows that are exact copies
-* Percentage of Duplicates in the Dataset - Indicates what percentage of the dataset is row level duplicates
-* Global Fields - The number of global fields in a dataset
-* Global Fields Percentage - Shows the percentage that global fields make up the dataset; A dataset with a high percetnge of global fields may indicate that its a reference dataset
+* Percentage of Duplicates in the Dataset - Indicates what percentage of the dataset is compromised of level duplicates
+* Documented Count and Percentage - Count/Percentage of the number of fields that have been documented and have completed field definitions
+* Global Field Count - The number of global fields in a dataset
+* Global Field Percentage - Shows the percentage that global fields make up the dataset; A dataset with a high percetnge of global fields may indicate that its a reference dataset
 * The day the dataset was last updated - Shows how recently the dataset was updated
-* The number of days since the dataset was last updated- A dataset with a high number of days suggest that the dataset is stale
+* Days Since Last Updated - The number of days between today and the date when the dataset was last updated; Can be used to indetify stale datasets
+* Days Since First Created - The number of days between today and the date when the dataset was first created
 * Plus other metadata information that can be used for more indepth analysis/analytics....
 
 
