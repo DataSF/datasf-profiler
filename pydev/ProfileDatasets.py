@@ -148,7 +148,6 @@ class ProfileDatasets:
     dataset_stats['days_since_first_created'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['created_date'], dt_fmt)
     dataset_stats = DictUtils.filterDictOnBlanks(dataset_stats)
     dataset_stats = DictUtils.filterDictOnNans(dataset_stats)
-
     return  dataset_stats
 
   @staticmethod
@@ -170,7 +169,7 @@ class ProfileDatasets:
     row_id = configItems['dd']['ds_profiles']['row_id']
     base_url =  configItems['baseUrl']
     ds_profile_keys = ds_profiles.keys()
-    datasets_chunks = ListUtils.makeChunks(datasets, 5)
+    datasets_chunks = ListUtils.makeChunks(datasets, 20)
     dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': ds_profiles_fbf, 'row_id': row_id}
     for chunk in datasets_chunks:
       datasets_stats = []
@@ -179,13 +178,18 @@ class ProfileDatasets:
         if dataset['datasetid'] in ds_profile_keys:
           if ( not ( DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt ))):
             dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
+            print "updated_dateset"
+            print dataset_stats
             datasets_stats.append(dataset_stats)
           else:
+            #print "just updating timestamp"
             dataset_stats = ProfileDatasets.updt_dtStamp_from_events(sQobj, dataset)
             datasets_stats.append(dataset_stats)
         else:
           dataset_stats = ProfileDatasets.getDatasetStats(sQobj, dataset, mmdd_fbf, field_types, asset_inventory_dict)
+          print "new dataset"
           datasets_stats.append(dataset_stats)
+          print datasets_stats
       if len(datasets_stats) > 0:
         dataset_info['DatasetRecordsCnt'] = 0
         dataset_info['SrcRecordsCnt'] = len(datasets_stats)
