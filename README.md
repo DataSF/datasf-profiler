@@ -1,14 +1,5 @@
 # DataSF Profiler
 
-## Aspects of Data Quality -> Open data programs should monitor the following data quality metrics on their open data portals:
-* Completeness
-* Validity
-* Timeliness
-* Uniqueness
-* Consistency
-* Accuracy
-
-
 ## Why do data profiling?
 * Data profiling helps us make an assessment of data quality
 * It assists in the discovery of anomalies within the data
@@ -16,9 +7,16 @@
 * It surfaces issues/problems that we might run into before we start working with the data
 * It helps us assess and validate metadata
 
+## Using this tool, DataSF can monitoring the following data quality metrics on their open data portal:
+* Completeness
+* Validity
+* Timeliness
+* Uniqueness
+* Consistency
+* Accuracy
 
 ## Types of Data Profiling Analysis That DataSF Profiler performs
-Data can be profiled both the dataset level and at the column level. Below outlines the type of analysis that can be conducted.
+Data can be profiled both the dataset level and at the column level. Below outlines the types of analysis that the profiling tool conducts
 
 ### Dataset Level Analysis
 * Total number of records- the total number of records in a dataset
@@ -30,7 +28,7 @@ Data can be profiled both the dataset level and at the column level. Below outli
 * Global Fields Percentage - Shows the percentage that global fields make up the dataset; A dataset with a high percetnge of global fields may indicate that its a reference dataset
 * The day the dataset was last updated - shows how recently the dataset was updated
 * The number of days since the dataset was last updated- a dataset with a high number of days suggest that the dataset is stale
-* Other metadata information that can be used for more indepth analysis
+* Plus other metadata information that can be used for more indepth analysis/analytics....
 
 
 ### Field Level Analysis
@@ -56,11 +54,12 @@ Data can be profiled both the dataset level and at the column level. Below outli
 * Many other summary stats such as standard deviation, variance, quartiles, iqr, kurtosis, and skewness
 
 ### How this works + tech specs
-This repo builds on other work that Datasf has done around metadata.
-It uses the collect metadata to run a bunch of queries to profile the data.
-Support is built into the tool to kill processes and queries that take too long....
-Can be configured to send email notifications when various tasks are done...
+* This repo builds on other work that Datasf has done around metadata.
+* It uses various metadata to run a bunch of queries that profile the data.
+* Most of the heavy lifting is done by the portal's API, not in memory for quicker run time
+* Support is built into the tool to kill processes and queries that take too long
+* This tool can be configured to send email notifications when various tasks are done
 
 ### Related Repos
-* [the metadata management tool ] (https://github.com/DataSF/metadata-mgmt-tool)
+* [the metadata management tool ](https://github.com/DataSF/metadata-mgmt-tool)
 * [fetch-metadata-fields](https://github.com/DataSF/fetch-metadata-fields)
