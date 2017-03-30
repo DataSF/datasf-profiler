@@ -19,15 +19,15 @@
 Data can be profiled both the dataset level and at the field level. Below outlines the types of analysis that the profiling tool conducts
 
 ### Dataset Level Analysis
-* Total number of records- the total number of records in a dataset
-* Total Number of Fields - the total number of fields in a dataset
-* Field Type Counts -  for each field type the number of fields that are of that type
+* Total number of records- The total number of records in a dataset
+* Total Number of Fields - The total number of fields in a dataset
+* Field Type Counts -  For each field type the number of fields that are of that type
 * Number of Duplicates - The number of row level duplicates- aka rows that are exact copies
 * Percentage of Duplicates in the Dataset - Indicates what percentage of the dataset is row level duplicates
-* Global Fields - the number of global fields in a dataset
+* Global Fields - The number of global fields in a dataset
 * Global Fields Percentage - Shows the percentage that global fields make up the dataset; A dataset with a high percetnge of global fields may indicate that its a reference dataset
-* The day the dataset was last updated - shows how recently the dataset was updated
-* The number of days since the dataset was last updated- a dataset with a high number of days suggest that the dataset is stale
+* The day the dataset was last updated - Shows how recently the dataset was updated
+* The number of days since the dataset was last updated- A dataset with a high number of days suggest that the dataset is stale
 * Plus other metadata information that can be used for more indepth analysis/analytics....
 
 
