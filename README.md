@@ -71,5 +71,5 @@ Data can be profiled both the dataset level and at the field level. Below outlin
 * This tool can be configured to send email notifications when various tasks are done
 
 ### Related Repos
-* [the metadata management tool ](https://github.com/DataSF/metadata-mgmt-tool)
+* [Metadata Management Tool ](https://github.com/DataSF/metadata-mgmt-tool)
 * [fetch-metadata-fields](https://github.com/DataSF/fetch-metadata-fields)
