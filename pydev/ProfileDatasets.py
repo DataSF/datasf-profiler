@@ -90,6 +90,7 @@ class ProfileDatasets:
   def getTypeCnt(sQobj, dataset, mmdd_fbf, field_types):
     '''returns the a count of fields by type for a dataset'''
     #dataset_stats = {'field_count': dataset['value'], 'datasetid': dataset['datasetid'], 'nbeid': dataset['nbeid'], 'dataset_name': dataset['dataset_name'] 'last_updt_dt_data': }
+    #copy the data over from the master dd to keep things si
     dataset_stats = dataset
     dataset_stats['field_count'] = dataset_stats['value']
     del dataset_stats['value']
@@ -178,12 +179,11 @@ class ProfileDatasets:
       for dataset in chunk:
         dataset_stats = {}
         if dataset['datasetid'] in ds_profile_keys:
-          if dataset['datasetid'] == 'sqj6-g4dr':
           #if ( not ( DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt ))):
-            dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
+          dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
             #print "updated_dateset"
             #print
-            datasets_stats.append(dataset_stats)
+          datasets_stats.append(dataset_stats)
           #else:
           #  #print "just updating timestamp"
           #  dataset_stats = ProfileDatasets.updt_dtStamp_from_events(sQobj, dataset)
