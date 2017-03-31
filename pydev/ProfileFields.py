@@ -150,13 +150,6 @@ class ProfileFields:
     '''count of the number of records with an actual value (i.e., non-NULL and non-Missing)'''
     #https://data.sfgov.org/resource/e2px-wugd.json?$query=SELECT COUNT(project_status) WHERE project_status IS NOT NULL
     qry = '''%s%s.json?$query=SELECT COUNT(%s) AS value WHERE %s IS NOT NULL ''' %( base_url, nbeId, fieldName, fieldName)
-    ##if(field_type) == 'text':
-    # qry2 =  '''OR (%s not like '%%25  %%25' or %s != " ") ''' % (fieldName, fieldName)
-    #elif (field_type) == 'numeric':
-    #  qry2 = '''OR %s != 0 ''' %(fieldName)
-    #print
-    #print "actuals"
-    #print qry+qry2
     results = ProfileFields.getResults(sQobj, qry)
     return results - missing_count
 
@@ -274,6 +267,8 @@ class ProfileFields:
     if field_type == 'numeric':
       return round( (float(myMax)-float(myMin)), 2)
     if field_type == 'timestamp' and dt_format:
+      origMin = myMin
+      origMax = myMax
       try:
         myMin = DateUtils.strToDtObj(myMin, dt_format)
         myMax = DateUtils.strToDtObj(myMax, dt_format)
@@ -284,6 +279,9 @@ class ProfileFields:
           myMax = DateUtils.strToDtObj(myMax, dt_format)
         except Exception,e :
           print str(e)
+          print "something weird went wrong the date stamps"
+          print origMin
+          print origMax
           return ''
       return abs((myMax - myMin).days)
     return ''
@@ -309,7 +307,6 @@ class ProfileFields:
     results_obj = []
     if fieldType  == 'numeric':
       try:
-        #print "issuing qrys"
         qry_cols = '''%s as label WHERE %s IS NOT NULL ORDER BY %s''' % (fieldName, fieldName, fieldName)
         results_obj =  sQobj.pageThroughResultsSelect(nbeId, qry_cols)
       except Exception, e:
