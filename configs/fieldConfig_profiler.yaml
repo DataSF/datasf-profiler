@@ -37,6 +37,13 @@ json_key: updt_fields
 app_name: Profile Data Fields
 baseUrl: https://data.sfgov.org/resource/
 
+jobs:
+  profile_fields:
+    job_name: Profile Fields
+    app_name: Profile Data Fields
+  profile_datasets:
+    job_name: Profile Datasets
+    app_name: Profile Datasets
 
 dataset_name: Field Profiles
 

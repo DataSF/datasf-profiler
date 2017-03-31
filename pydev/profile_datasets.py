@@ -27,6 +27,12 @@ def parse_opts():
                       dest='configDir',
                       default=None,
                       help=helpmsgConfigDir ,)
+  helpmsgjobType = 'Use the -n to specify a job name. EX: profile_fields - can either be profile_datasets or profile_fields'
+  parser.add_option('-n', '--jobtype',
+                      action='store',
+                      dest='jobType',
+                      default=None,
+                      help=helpmsgjobType ,)
 
   (options, args) = parser.parse_args()
 
@@ -38,21 +44,27 @@ def parse_opts():
     print "ERROR: You must specify a directory path for the config files!"
     print helpmsgConfigDir
     exit(1)
+  elif options.jobType is None:
+    print "ERROR: You must specify a directory path for the config files!"
+    print helpmsgjobType
+    exit(1)
+
   config_inputdir = None
   fieldConfigFile = None
   fieldConfigFile = options.configFn
   config_inputdir = options.configDir
-  return fieldConfigFile, config_inputdir
+  jobType =  options.jobType
+  return fieldConfigFile, config_inputdir, jobType
 
 
 
 def main():
-  fieldConfigFile, config_inputdir = parse_opts()
+  fieldConfigFile, config_inputdir, jobType = parse_opts()
   cI =  ConfigUtils(config_inputdir,fieldConfigFile  )
   configItems = cI.getConfigs()
+  configItems['app_name'] =  jobType
   lg = pyLogger(configItems)
   logger = lg.setConfig()
-  dsse = JobStatusEmailerComposer(configItems, logger)
   logger.info("****************JOB START******************")
   sc = SocrataClient(config_inputdir, configItems, logger)
   client = sc.connectToSocrata()
@@ -73,18 +85,17 @@ def main():
   ds_profiles = ProfileDatasets.getCurrentDatasetProfiles(sQobj, base_url, ds_profiles_fbf )
 
   field_types = ProfileDatasets.getFieldTypes(sQobj, base_url, field_type_fbf)
-  print field_types
+
   dataset_info =  ProfileDatasets.buildInsertDatasetProfiles(sQobj, scrud, configItems, datasets, ds_profiles,  field_types, asset_inventory_dict)
   print dataset_info
+  dsse = JobStatusEmailerComposer(configItems, logger, jobType)
 
-  #print dataset_info
-  #if dataset_info['DatasetRecordsCnt'] > 1:
-  #  dsse = JobStatusEmailerComposer(configItems, logger)
-  #  dsse.sendJobStatusEmail([dataset_info])
-  #else:
-  #  dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': "Nothing to Insert"}
-  #  dataset_info['isLoaded'] = 'success'
-  #  dsse.sendJobStatusEmail([dataset_info])
+  if dataset_info['DatasetRecordsCnt'] > 1:
+    dsse.sendJobStatusEmail([dataset_info])
+  else:
+    dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': "Nothing to Insert"}
+    dataset_info['isLoaded'] = 'success'
+    dsse.sendJobStatusEmail([dataset_info])
 
 
 

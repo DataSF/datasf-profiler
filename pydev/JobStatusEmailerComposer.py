@@ -6,12 +6,13 @@ class JobStatusEmailerComposer:
     '''
     util class to get job status- aka check to make sure that records were inserted; also emails results to receipients
     '''
-    def __init__(self, configItems,logger):
+    def __init__(self, configItems,logger, jobNameType):
         self.keysToRemove = ['columns', 'tags']
         self.log_dir = configItems['log_dir']
         self.dataset_base_url = configItems['base_url']
         self.failure =  False
-        self.job_name = configItems['job_name']
+        self.job_name = configItems['jobs'][jobNameType]['job_name']
+        print  self.job_name
         self.logfile_fname = self.job_name.replace(" ", "_").lower() + ".csv"
         self.logfile_fullpath = self.log_dir + self.job_name.replace(" ", "_").lower() + ".csv"
         self.configItems =  configItems

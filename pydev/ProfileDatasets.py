@@ -89,7 +89,10 @@ class ProfileDatasets:
   @staticmethod
   def getTypeCnt(sQobj, dataset, mmdd_fbf, field_types):
     '''returns the a count of fields by type for a dataset'''
-    dataset_stats = {'field_count': dataset['value'], 'datasetid': dataset['datasetid'], 'nbeid': dataset['nbeid'], 'dataset_name': dataset['dataset_name']}
+    #dataset_stats = {'field_count': dataset['value'], 'datasetid': dataset['datasetid'], 'nbeid': dataset['nbeid'], 'dataset_name': dataset['dataset_name'] 'last_updt_dt_data': }
+    dataset_stats = dataset
+    dataset_stats['field_count'] = dataset_stats['value']
+    del dataset_stats['value']
     field = ''
     qry_num_fields = '''%s%s.json?$query=SELECT field_type, count(*)  as value WHERE privateordeleted != true AND datasetid = '%s' AND field_type = ''' % (dataset['base_url'], mmdd_fbf, dataset['datasetid'])
     for ft in field_types:
@@ -109,7 +112,7 @@ class ProfileDatasets:
   @staticmethod
   def getDocumentedFieldCnt(sQobj, dataset, mmdd_fbf):
     '''returns the number of fields  that documented in a dataset'''
-    qry =  '''%s%s.json?$query=SELECT count(*) as value WHERE privateordeleted != true AND datasetid = '%s' AND field_definition IS NOT NULL ''' % (dataset['base_url'], mmdd_fbf, dataset['datasetid'])
+    qry =  '''%s%s.json?$query=SELECT count(*) as value WHERE privateordeleted != true AND datasetid = '%s' AND (field_definition IS NOT NULL OR global_field_definition IS NOT NULL) ''' % (dataset['base_url'], mmdd_fbf, dataset['datasetid'])
     return ProfileFields.getResults(sQobj, qry)
 
   @staticmethod
@@ -139,7 +142,6 @@ class ProfileDatasets:
       dataset_stats = DictUtils.merge_two_dicts(dataset_stats, auxInfo)
     else:
       dataset_stats = DictUtils.merge_two_dicts(dataset, dataset_stats)
-    print dataset_stats
     dataset_stats['global_field_count'] =  ProfileDatasets.getGlobalFieldCnt(sQobj, dataset, mmdd_fbf)
     dataset_stats['global_field_percentage'] = ProfileDatasets.getCntAsPercent(dataset_stats['field_count'] , dataset_stats['global_field_count'])
     dataset_stats['documented_count'] = ProfileDatasets.getDocumentedFieldCnt(sQobj, dataset, mmdd_fbf)
@@ -169,27 +171,29 @@ class ProfileDatasets:
     row_id = configItems['dd']['ds_profiles']['row_id']
     base_url =  configItems['baseUrl']
     ds_profile_keys = ds_profiles.keys()
-    datasets_chunks = ListUtils.makeChunks(datasets, 20)
+    datasets_chunks = ListUtils.makeChunks(datasets, 5)
     dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': ds_profiles_fbf, 'row_id': row_id}
     for chunk in datasets_chunks:
       datasets_stats = []
       for dataset in chunk:
         dataset_stats = {}
         if dataset['datasetid'] in ds_profile_keys:
-          if ( not ( DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt ))):
+          if dataset['datasetid'] == 'sqj6-g4dr':
+          #if ( not ( DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt ))):
             dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
-            print "updated_dateset"
-            print dataset_stats
+            #print "updated_dateset"
+            #print
             datasets_stats.append(dataset_stats)
-          else:
-            #print "just updating timestamp"
-            dataset_stats = ProfileDatasets.updt_dtStamp_from_events(sQobj, dataset)
-            datasets_stats.append(dataset_stats)
+          #else:
+          #  #print "just updating timestamp"
+          #  dataset_stats = ProfileDatasets.updt_dtStamp_from_events(sQobj, dataset)
+          #  datasets_stats.append(dataset_stats)
         else:
           dataset_stats = ProfileDatasets.getDatasetStats(sQobj, dataset, mmdd_fbf, field_types, asset_inventory_dict)
           print "new dataset"
           datasets_stats.append(dataset_stats)
           print datasets_stats
+          print
       if len(datasets_stats) > 0:
         dataset_info['DatasetRecordsCnt'] = 0
         dataset_info['SrcRecordsCnt'] = len(datasets_stats)

@@ -356,7 +356,7 @@ class ProfileFields:
     row_id = configItems['dd']['field_profiles']['row_id']
     base_url =  configItems['baseUrl']
     profile_keys = current_field_profiles.keys()
-    field_chunks = ListUtils.makeChunks(master_dfList, 50)
+    field_chunks = ListUtils.makeChunks(master_dfList, 20)
     dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': field_profile_fbf, 'row_id': row_id}
     for chunk in field_chunks:
       new_field_profiles = []
@@ -364,23 +364,21 @@ class ProfileFields:
         field_profile = {}
         if field['columnid'] in profile_keys:
           if ( not ( DateUtils.compare_two_timestamps( current_field_profiles[field['columnid']],  field['last_updt_dt_data'], dt_fmt , dt_fmt ))):
-            print "**** updated field****"
-            print field
+            #print "**** updated field****"
+            #print field
             field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
-            print field_profile
           else:
             #print "***updating date"
             field_profile =  ProfileFields.updtDaysSinceLastUpdt(field)
-            #print field_profile
           new_field_profiles.append(field_profile)
         else:
           print "**** new field****"
           print field
           field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
-          print field_profile
           print
           new_field_profiles.append(field_profile)
       if len(new_field_profiles) > 0:
+        #print new_field_profiles
         dataset_info['DatasetRecordsCnt'] = 0
         dataset_info['SrcRecordsCnt'] = len(new_field_profiles)
         signal.alarm(5)
@@ -390,7 +388,6 @@ class ProfileFields:
           print "upload took too long"
         else:
           signal.alarm(0)
-        #print dataset_info
         src_records = src_records + dataset_info['SrcRecordsCnt']
         inserted_records = inserted_records + dataset_info['DatasetRecordsCnt']
     dataset_info['SrcRecordsCnt'] = src_records

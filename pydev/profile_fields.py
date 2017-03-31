@@ -27,6 +27,12 @@ def parse_opts():
                       dest='configDir',
                       default=None,
                       help=helpmsgConfigDir ,)
+  helpmsgjobType = 'Use the -n to specify a job name. EX: profile_fields -EX: profile_fields - can either be profile_datasets or profile_fields'
+  parser.add_option('-n', '--jobtype',
+                      action='store',
+                      dest='jobType',
+                      default=None,
+                      help=helpmsgjobType ,)
 
   (options, args) = parser.parse_args()
 
@@ -38,21 +44,26 @@ def parse_opts():
     print "ERROR: You must specify a directory path for the config files!"
     print helpmsgConfigDir
     exit(1)
+  elif options.jobType is None:
+    print "ERROR: You must specify a directory path for the config files!"
+    print helpmsgjobType
+    exit(1)
+
   config_inputdir = None
   fieldConfigFile = None
   fieldConfigFile = options.configFn
   config_inputdir = options.configDir
-  return fieldConfigFile, config_inputdir
+  jobType =  options.jobType
+  return fieldConfigFile, config_inputdir, jobType
 
 
 def main():
-
-  fieldConfigFile, config_inputdir = parse_opts()
-  cI =  ConfigUtils(config_inputdir,fieldConfigFile  )
+  fieldConfigFile, config_inputdir, jobType = parse_opts()
+  cI =  ConfigUtils(config_inputdir,fieldConfigFile )
   configItems = cI.getConfigs()
+  configItems['dataset_name'] =  jobType
   lg = pyLogger(configItems)
   logger = lg.setConfig()
-  dsse = JobStatusEmailerComposer(configItems, logger)
   logger.info("****************JOB START******************")
   sc = SocrataClient(config_inputdir, configItems, logger)
   client = sc.connectToSocrata()
@@ -63,6 +74,7 @@ def main():
   mmdd_fbf = configItems['dd']['master_dd']['fbf']
   field_profiles_fbf =  configItems['dd']['field_profiles']['fbf']
   base_url =  configItems['baseUrl']
+
   field_type_fbf =  configItems['dd']['field_type']['fbf']
 
 
@@ -70,14 +82,18 @@ def main():
   #print load_mm_dd
   #load_mm_dd  = True
   current_field_profiles = ProfileFields.getCurrentFieldProfiles(sQobj, base_url, field_profiles_fbf)
-  #print "****current profiles*****"
-  #print current_field_profiles
+
   if load_mm_dd :
     master_dfList = ProfileFields.get_dataset_as_dfList(configItems['pickle_data_dir'], configItems['mm_dd_json_fn'], base_url)
     dataset_info = ProfileFields.buildInsertFieldProfiles(sQobj, scrud, configItems, master_dfList, current_field_profiles)
-    #print dataset_info
-    #dsse = JobStatusEmailerComposer(configItems, logger)
-    #dsse.sendJobStatusEmail([dataset_info])
+    print dataset_info
+    dsse = JobStatusEmailerComposer(configItems, logger, jobType)
+    if dataset_info['DatasetRecordsCnt'] > 1:
+      dsse.sendJobStatusEmail([dataset_info])
+    else:
+      dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': "Nothing to Insert"}
+      dataset_info['isLoaded'] = 'success'
+      dsse.sendJobStatusEmail([dataset_info])
 
 
 
