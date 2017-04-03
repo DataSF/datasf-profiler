@@ -62,7 +62,7 @@ def main():
   fieldConfigFile, config_inputdir, jobType = parse_opts()
   cI =  ConfigUtils(config_inputdir,fieldConfigFile  )
   configItems = cI.getConfigs()
-  configItems['app_name'] =  jobType
+  configItems['dataset_name'] =  jobType
   lg = pyLogger(configItems)
   logger = lg.setConfig()
   logger.info("****************JOB START******************")

@@ -312,7 +312,6 @@ class ProfileFields:
       except Exception, e:
           print "time out! Numeric Field Stats- Qry too long to profile numeric"
           return stats
-      #print results_obj
       if len(results_obj) > 0:
         signal.alarm(0)
         results = [float(result['label']) for result in results_obj]
