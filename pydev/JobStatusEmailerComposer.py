@@ -12,7 +12,6 @@ class JobStatusEmailerComposer:
         self.dataset_base_url = configItems['base_url']
         self.failure =  False
         self.job_name = configItems['jobs'][jobNameType]['job_name']
-        print  self.job_name
         self.logfile_fname = self.job_name.replace(" ", "_").lower() + ".csv"
         self.logfile_fullpath = self.log_dir + self.job_name.replace(" ", "_").lower() + ".csv"
         self.configItems =  configItems

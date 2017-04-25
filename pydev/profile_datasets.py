@@ -89,7 +89,6 @@ def main():
   dataset_info =  ProfileDatasets.buildInsertDatasetProfiles(sQobj, scrud, configItems, datasets, ds_profiles,  field_types, asset_inventory_dict)
   print dataset_info
   dsse = JobStatusEmailerComposer(configItems, logger, jobType)
-
   if dataset_info['DatasetRecordsCnt'] > 1:
     dsse.sendJobStatusEmail([dataset_info])
   else:

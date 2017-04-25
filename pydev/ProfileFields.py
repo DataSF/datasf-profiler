@@ -123,7 +123,7 @@ class ProfileFields:
       #  print more_stats
       if len(more_stats.keys()) > 0:
         field.update(more_stats)
-    field['last_updt_dt'] = DateUtils.get_current_timestamp()
+    field['profile_last_updt_dt'] = DateUtils.get_current_timestamp()
     dt_fmt = '%Y-%m-%dT%H:%M:%S'
     field['days_since_last_updated'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(field['last_updt_dt_data'], dt_fmt)
     field = DictUtils.filterDictOnBlanks(field)
