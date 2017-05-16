@@ -10,6 +10,7 @@ from Utils import *
 from DictUtils import *
 from ProfileFields import *
 from DictUtils import *
+import requests
 
 class ProfileDatasets:
 
@@ -26,7 +27,6 @@ class ProfileDatasets:
       del result['datasetid']
       assets_inventory_dict[datasetid] = result
     return assets_inventory_dict
-
 
   @staticmethod
   def getCurrentDatasetProfiles(sQobj, base_url, fbf):
@@ -59,6 +59,23 @@ class ProfileDatasets:
     results = sQobj.getQryFull(qry)
     df = PandasUtils.makeDfFromJson(results)
     return df['field_type'].tolist()
+
+  @staticmethod
+  def getRowInfo(fbf):
+    qry = '''https://data.sfgov.org/api/views/%s.json''' % (fbf)
+    r = requests.get(qry)
+    json = r.json()
+    rowLabel =  None
+    rowIdentifier = None
+    if "rowLabel" in  json['metadata'].keys():
+      rowLabel =  json['metadata']['rowLabel']
+    if "resourceName" in  json.keys():
+      rowIdentifier = json['resourceName']
+
+    else:
+      print  json['metadata'].keys()
+    return { 'rowLabel': rowLabel, 'rowIdentifier': rowIdentifier}
+
 
 
   @staticmethod
@@ -149,6 +166,8 @@ class ProfileDatasets:
     dataset_stats['documented_percentage'] = ProfileDatasets.getCntAsPercent(dataset_stats['field_count'], dataset_stats['documented_count'])
     dataset_stats['days_since_last_updated'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['last_updt_dt_data'], dt_fmt)
     dataset_stats['days_since_first_created'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['created_date'], dt_fmt)
+    rowInfo = ProfileDatasets.getRowInfo(dataset['datasetid'])
+    dataset_stats = DictUtils.merge_two_dicts(dataset_stats,rowInfo)
     dataset_stats = DictUtils.filterDictOnBlanks(dataset_stats)
     dataset_stats = DictUtils.filterDictOnNans(dataset_stats)
     return  dataset_stats
@@ -159,6 +178,8 @@ class ProfileDatasets:
     dt_fmt = '%Y-%m-%dT%H:%M:%S'
     dataset_stats['days_since_last_updated'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['last_updt_dt_data'], dt_fmt)
     dataset_stats['days_since_first_created'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['created_date'], dt_fmt)
+    rowInfo = ProfileDatasets.getRowInfo(dataset['datasetid'])
+    dataset_stats = DictUtils.merge_two_dicts(dataset_stats,rowInfo)
     return  dataset_stats
 
 
