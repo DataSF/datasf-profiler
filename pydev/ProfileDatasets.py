@@ -11,6 +11,8 @@ from DictUtils import *
 from ProfileFields import *
 from DictUtils import *
 import requests
+import time
+from datetime import date
 
 class ProfileDatasets:
 
@@ -28,10 +30,32 @@ class ProfileDatasets:
       assets_inventory_dict[datasetid] = result
     return assets_inventory_dict
 
+
   @staticmethod
-  def getCurrentDatasetProfiles(sQobj, base_url, fbf):
+  def getViewsLastUpdatedAt( datesetid,last_updt_dp):
+    qry = '''https://data.sfgov.org/api/views/%s.json''' %(datesetid)
+    print qry
+    r = requests.get( qry )
+    view_info =  r.json()
+    last_updt_views = view_info['rowsUpdatedAt']
+    last_updt_views = datetime.datetime.utcfromtimestamp(last_updt_views)
+    columns = view_info['columns']
+    column_names = [ datesetid + "_" + col['fieldName'] for col in columns ]
+    last_updt_dp =  datetime.datetime.strptime(last_updt_dp, "%Y-%m-%dT%H:%M:%S")
+    if last_updt_views > last_updt_dp:
+      last_updt_views = last_updt_views.strftime('%Y-%m-%dT%H:%M:%S')
+      return [ {'columnid':col, 'last_updt_dt_data': last_updt_views } for col in column_names]
+    return []
+
+
+
+
+  @staticmethod
+  def getCurrentDatasetProfiles(sQobj, base_url, fbf, daily=False):
     '''gets dict of the the datasetid and the dt the dataset was updated; used for lookup purposes'''
     qry = '''%s%s.json?$query=SELECT datasetid,  profile_last_updt_dt ''' % (base_url, fbf)
+    if daily:
+      qry = '''%s%s.json?$query=SELECT datasetid,  profile_last_updt_dt WHERE publishing_frequency = 'Daily' OR publishing_frequency = 'Streaming' ''' % (base_url, fbf)
     dictList = PandasUtils.resultsToDictList(sQobj, qry)
     return PandasUtils.getDictListAsMappedDict('datasetid', 'profile_last_updt_dt', dictList)
 
