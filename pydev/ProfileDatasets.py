@@ -52,11 +52,18 @@ class ProfileDatasets:
   @staticmethod
   def getCurrentDatasetProfiles(sQobj, base_url, fbf, daily=False):
     '''gets dict of the the datasetid and the dt the dataset was updated; used for lookup purposes'''
-    qry = '''%s%s.json?$query=SELECT datasetid,  profile_last_updt_dt ''' % (base_url, fbf)
+    qry = '''%s%s.json?$query=SELECT datasetid,  profile_last_updt_dt''' % (base_url, fbf)
     if daily:
       qry = '''%s%s.json?$query=SELECT datasetid,  profile_last_updt_dt WHERE publishing_frequency = 'Daily' OR publishing_frequency = 'Streaming' ''' % (base_url, fbf)
     dictList = PandasUtils.resultsToDictList(sQobj, qry)
     return PandasUtils.getDictListAsMappedDict('datasetid', 'profile_last_updt_dt', dictList)
+
+  @staticmethod
+  def getCurrentDatasetProfilesDescription(sQobj, base_url, fbf, datasetid):
+    '''gets dict of the the datasetid and the dt the dataset was updated; used for lookup purposes'''
+    qry = '''%s%s.json?$query=SELECT description where datasetid = '%s' ''' % (base_url, fbf, datasetid)
+    dictList = PandasUtils.resultsToDictList(sQobj, qry)
+    return dictList[0]
 
   @staticmethod
   def joinAuxDataSetInfo(dataset, asset_inventory_dict):
@@ -114,12 +121,14 @@ class ProfileDatasets:
     r = requests.get(qry)
     json = r.json()
     rowLabel =  None
+    rowsUpdatedAt = ''
     if "rowLabel" in  json['metadata'].keys():
       rowLabel =  json['metadata']['rowLabel']
     if (rowLabel is None):
       rowLabel =  'Row'
     rowIdentifier = ProfileDatasets.getRowIdentifier(json)
-    rowsUpdatedAt =  ProfileDatasets.getLastUpdatedFromViews(json['rowsUpdatedAt'])
+    if 'rowsUpdatedAt' in json.keys():
+      rowsUpdatedAt =  ProfileDatasets.getLastUpdatedFromViews(json['rowsUpdatedAt'])
     return { 'rowLabel': rowLabel, 'rowIdentifier': rowIdentifier, 'last_updt_dt_data': rowsUpdatedAt}
 
 
@@ -194,9 +203,6 @@ class ProfileDatasets:
   @staticmethod
   def getDatasetStats(sQobj, dataset, mmdd_fbf, field_types, asset_inventory_dict):
     dataset_stats = {}
-    print
-    print dataset
-    print
     dataset_stats = ProfileDatasets.getTypeCnt(sQobj,dataset, mmdd_fbf, field_types)
     dataset_stats['dupe_record_count'] = ProfileDatasets.getDatasetDupes(sQobj,mmdd_fbf, dataset)
     dataset_stats['dupe_record_percent'] = ProfileDatasets.percentDuplicate(dataset_stats)
@@ -270,18 +276,23 @@ class ProfileDatasets:
       for dataset in chunk:
         dataset_stats = {}
         if dataset['datasetid'] in ds_profile_keys:
-          #dataset_stats = ProfileDatasets.getDatasetStats(sQobj, dataset, mmdd_fbf, field_types, asset_inventory_dict)
-          #print "new dataset"
-          #datasets_stats.append(dataset_stats)
-          #print datasets_stats
-          #print
-          #if ( not ( DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt ))):
-          dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
-          datasets_stats.append(dataset_stats)
+          description = ProfileDatasets.getCurrentDatasetProfilesDescription(sQobj, base_url, ds_profiles_fbf, dataset['datasetid'] )
+          if ( not ( DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt ))):
+            print "updating bc more recent exisits"
+            print dataset
+            dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
+            datasets_stats.append(dataset_stats)
+          elif('description' not in description.keys()):
+            print "** updating if without descript ****"
+            print dataset
+            dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
+            datasets_stats.append(dataset_stats)
           #else:
+            #print "did not update" + dataset['datasetid']
           #  print "just updating timestamp"
           #  dataset_stats = ProfileDatasets.updt_dtStamp_from_events(sQobj, dataset)
         else:
+          print dataset
           dataset_stats = ProfileDatasets.getDatasetStats(sQobj, dataset, mmdd_fbf, field_types, asset_inventory_dict)
           print "new dataset"
           datasets_stats.append(dataset_stats)
@@ -290,9 +301,12 @@ class ProfileDatasets:
       if len(datasets_stats) > 0:
         dataset_info['DatasetRecordsCnt'] = 0
         dataset_info['SrcRecordsCnt'] = len(datasets_stats)
-        dataset_info = scrud.postDataToSocrata(dataset_info, datasets_stats)
-        src_records = src_records + dataset_info['SrcRecordsCnt']
-        inserted_records = inserted_records + dataset_info['DatasetRecordsCnt']
+        try:
+          dataset_info = scrud.postDataToSocrata(dataset_info, datasets_stats)
+          src_records = src_records + dataset_info['SrcRecordsCnt']
+          inserted_records = inserted_records + dataset_info['DatasetRecordsCnt']
+        except Exception, e:
+          print str(e)
     dataset_info['SrcRecordsCnt'] = src_records
     dataset_info['DatasetRecordsCnt'] = inserted_records
     return dataset_info

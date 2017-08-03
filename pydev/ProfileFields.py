@@ -298,28 +298,22 @@ class ProfileFields:
   @staticmethod
   def get_stats(sQobj, base_url, nbeId, fieldName, fieldType):
     def timeout_handler(signum, frame):   # Custom signal handler
-      print "ERROR: timed out"
+      print "ERROR: timed out when calculating stats"
       raise TimeoutException
-
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(12)
     stats = {}
     results_obj = []
     if fieldType  != 'numeric':
       return stats
     if fieldType  == 'numeric':
-      print "******getting stats*****"
-      print fieldName
-      print "******"
+      signal.signal(signal.SIGALRM, timeout_handler)
+      signal.alarm(18)
       try:
         qry_cols = '''%s as label WHERE %s IS NOT NULL ORDER BY %s''' % (fieldName, fieldName, fieldName)
         results_obj =  sQobj.pageThroughResultsSelect(nbeId, qry_cols)
       except Exception, e:
-          print "time out! Numeric Field Stats- Qry too long to profile numeric"
+          print "ERROR: time out! Numeric Field Stats- Qry too long to profile numeric"
           return stats
       if len(results_obj) > 0:
-        print "******"
-        print len(results_obj)
         signal.alarm(0)
         results = [float(result['label']) for result in results_obj]
         lst = pd.Series(results)
@@ -336,10 +330,8 @@ class ProfileFields:
         stats['max_field_length'] = max(results_str)
         stats['avg_field_length']  = round(np.mean(results_str),2)
         return stats
-        print "****stats!!!****"
-        print stats
-        print
-        return stats
+    return stats
+
 
   @staticmethod
   def updtDaysSinceLastUpdt(field):
@@ -362,7 +354,7 @@ class ProfileFields:
     row_id = configItems['dd']['field_profiles']['row_id']
     base_url =  configItems['baseUrl']
     profile_keys = current_field_profiles.keys()
-    field_chunks = ListUtils.makeChunks(master_dfList, 20)
+    field_chunks = ListUtils.makeChunks(master_dfList, 10)
     dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': field_profile_fbf, 'row_id': row_id}
     for chunk in field_chunks:
       new_field_profiles = []
@@ -371,15 +363,20 @@ class ProfileFields:
         if field['columnid'] in profile_keys:
           if ( not ( DateUtils.compare_two_timestamps( current_field_profiles[field['columnid']],  field['last_updt_dt_data'], dt_fmt , dt_fmt ))):
             #print "**** updated field****"
-            print field
+            print field['field_name']
+            print
             field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
             new_field_profiles.append(field_profile)
-          #else:
+          elif field['field_type'] == 'numeric':
+            print field['field_name']
+            print
+            field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
+            new_field_profiles.append(field_profile)
             #print "***updating date"
             #field_profile =  ProfileFields.updtDaysSinceLastUpdt(field)
         else:
           print "**** new field****"
-          print field
+          print field['field_name']
           field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
           print
           new_field_profiles.append(field_profile)
@@ -387,11 +384,12 @@ class ProfileFields:
         #print new_field_profiles
         dataset_info['DatasetRecordsCnt'] = 0
         dataset_info['SrcRecordsCnt'] = len(new_field_profiles)
-        signal.alarm(5)
+        signal.alarm(15)
         try:
           dataset_info = scrud.postDataToSocrata(dataset_info, new_field_profiles)
         except:
-          print "upload took too long"
+          print "ERROR: upload to Socratatook too long"
+          print new_field_profiles
         else:
           signal.alarm(0)
         src_records = src_records + dataset_info['SrcRecordsCnt']
