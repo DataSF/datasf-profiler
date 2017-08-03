@@ -92,7 +92,15 @@ class ProfileDatasets:
       if rowIdentifier != '0':
         cols = json['columns']
         rowIdentifierName = [col['name'] for col in cols if col['id'] == rowIdentifier]
-        return rowIdentifierName[0]
+        if len(rowIdentifierName ) > 0:
+
+          return rowIdentifierName[0]
+        else:
+          print "****ERROR: something went wrong with parsing the row_id"
+          print rowIdentifier
+          print json
+          print "*******"
+          return None
     return None
   @staticmethod
   def getLastUpdatedFromViews(epochTime):

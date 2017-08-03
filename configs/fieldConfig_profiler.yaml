@@ -61,3 +61,5 @@ dd:
     row_id: columnid
   asset_inventory:
     fbf: 6u88-vc79
+
+migration_qry_url: https://data.sfgov.org/api/migrations/

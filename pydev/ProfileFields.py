@@ -297,9 +297,6 @@ class ProfileFields:
 
   @staticmethod
   def get_stats(sQobj, base_url, nbeId, fieldName, fieldType):
-    print "******getting stats*****"
-    print fieldName
-    print "******"
     def timeout_handler(signum, frame):   # Custom signal handler
       print "ERROR: timed out"
       raise TimeoutException
@@ -308,7 +305,12 @@ class ProfileFields:
     signal.alarm(12)
     stats = {}
     results_obj = []
+    if fieldType  != 'numeric':
+      return stats
     if fieldType  == 'numeric':
+      print "******getting stats*****"
+      print fieldName
+      print "******"
       try:
         qry_cols = '''%s as label WHERE %s IS NOT NULL ORDER BY %s''' % (fieldName, fieldName, fieldName)
         results_obj =  sQobj.pageThroughResultsSelect(nbeId, qry_cols)
@@ -316,6 +318,8 @@ class ProfileFields:
           print "time out! Numeric Field Stats- Qry too long to profile numeric"
           return stats
       if len(results_obj) > 0:
+        print "******"
+        print len(results_obj)
         signal.alarm(0)
         results = [float(result['label']) for result in results_obj]
         lst = pd.Series(results)
@@ -332,10 +336,10 @@ class ProfileFields:
         stats['max_field_length'] = max(results_str)
         stats['avg_field_length']  = round(np.mean(results_str),2)
         return stats
-    print "****stats!!!****"
-    print stats
-    print
-    return stats
+        print "****stats!!!****"
+        print stats
+        print
+        return stats
 
   @staticmethod
   def updtDaysSinceLastUpdt(field):
