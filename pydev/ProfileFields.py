@@ -297,12 +297,15 @@ class ProfileFields:
 
   @staticmethod
   def get_stats(sQobj, base_url, nbeId, fieldName, fieldType):
-
+    print "******getting stats*****"
+    print fieldName
+    print "******"
     def timeout_handler(signum, frame):   # Custom signal handler
+      print "ERROR: timed out"
       raise TimeoutException
 
     signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(7)
+    signal.alarm(12)
     stats = {}
     results_obj = []
     if fieldType  == 'numeric':
@@ -329,6 +332,9 @@ class ProfileFields:
         stats['max_field_length'] = max(results_str)
         stats['avg_field_length']  = round(np.mean(results_str),2)
         return stats
+    print "****stats!!!****"
+    print stats
+    print
     return stats
 
   @staticmethod
@@ -361,12 +367,12 @@ class ProfileFields:
         if field['columnid'] in profile_keys:
           if ( not ( DateUtils.compare_two_timestamps( current_field_profiles[field['columnid']],  field['last_updt_dt_data'], dt_fmt , dt_fmt ))):
             #print "**** updated field****"
-            #print field
+            print field
             field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
-          else:
+            new_field_profiles.append(field_profile)
+          #else:
             #print "***updating date"
-            field_profile =  ProfileFields.updtDaysSinceLastUpdt(field)
-          new_field_profiles.append(field_profile)
+            #field_profile =  ProfileFields.updtDaysSinceLastUpdt(field)
         else:
           print "**** new field****"
           print field

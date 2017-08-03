@@ -90,7 +90,6 @@ def main():
       dataset_info_mm = scrud.postDataToSocrata(dataset_info_mm, mm_profiles_to_updt)
       print  dataset_info_mm
 
-
   datasets = ProfileDatasets.getBaseDatasets(sQobj, base_url,  mmdd_fbf)
   asset_inventory_dict = ProfileDatasets.getAssetInventoryInfo(sQobj, base_url,  asset_inventory_fbf)
 

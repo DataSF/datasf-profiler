@@ -62,12 +62,6 @@ class DictUtils:
   def filterDictOnBlanks(some_dict):
     return {k: v for k, v in some_dict.items() if not(DictUtils.is_blank(v))}
 
-  @staticmethod
-  def merge_two_dicts(x, y):
-    """Given two dicts, merge them into a new dict as a shallow copy."""
-    z = x.copy()
-    z.update(y)
-    return z
 
   @staticmethod
   def consolidateDictList(results, key):

@@ -19,7 +19,7 @@ class ProfileDatasets:
   @staticmethod
   def getAssetInventoryInfo(sQobj, base_url, fbf):
     '''returns a nested dict obj of all the datasetids as keys from the asset inventory; values dicts of pertinent asset inventory info'''
-    qryCols = '''u_id as datasetid, category, downloads, publishing_frequency, data_change_frequency, visits'''
+    qryCols = '''u_id as datasetid, category, downloads, publishing_frequency, data_change_frequency, visits, description, name as dataset_name, keywords'''
     results =  sQobj.pageThroughResultsSelect(fbf, qryCols)
     #qry = '''%s%s.json?$query=SELECT u_id as datasetid, category, downloads, publishing_frequency, data_change_frequency, visits ''' % (base_url, fbf)
     #results = sQobj.getQryFull(qry)
@@ -70,7 +70,9 @@ class ProfileDatasets:
   @staticmethod
   def getBaseDatasets(sQobj, base_url, fbf):
     '''returns a list of datasets from the master data dictionary dataset'''
-    qry =  '''%s%s.json?$query=SELECT datasetid, nbeid, last_updt_dt_data, dataset_name, department, created_date,  count(*) as value  WHERE privateordeleted != true and nbeid IS NOT NULL GROUP BY datasetid, nbeid, last_updt_dt_data, dataset_name, department, created_date ''' % (base_url, fbf)
+    #qry =  '''%s%s.json?$query=SELECT datasetid, nbeid, last_updt_dt_data, dataset_name, department, created_date,  count(*) as value  WHERE privateordeleted != true and nbeid IS NOT NULL GROUP BY datasetid, nbeid, last_updt_dt_data, dataset_name, department, created_date ''' % (base_url, fbf)
+    qry =  '''%s%s.json?$query=SELECT datasetid, nbeid, last_updt_dt_data, department, created_date,  count(*) as value  WHERE privateordeleted != true and nbeid IS NOT NULL GROUP BY datasetid, nbeid, last_updt_dt_data, department, created_date ''' % (base_url, fbf)
+
     df = PandasUtils.resultsToDf(sQobj, qry)
     df['base_url'] = base_url
     df =  PandasUtils.fillNaWithBlank(df)
@@ -85,20 +87,34 @@ class ProfileDatasets:
     return df['field_type'].tolist()
 
   @staticmethod
+  def getRowIdentifier(json):
+    if "rowIdentifier" in   json['metadata'].keys():
+      rowIdentifier = json['metadata']['rowIdentifier']
+      if rowIdentifier != '0':
+        cols = json['columns']
+        rowIdentifierName = [col['name'] for col in cols if col['id'] == rowIdentifier]
+        return rowIdentifierName[0]
+    return None
+  @staticmethod
+  def getLastUpdatedFromViews(epochTime):
+    last_updt_views = datetime.datetime.utcfromtimestamp(epochTime)
+    last_updt_views = last_updt_views.strftime('%Y-%m-%dT%H:%M:%S')
+    return last_updt_views
+
+  @staticmethod
   def getRowInfo(fbf):
     qry = '''https://data.sfgov.org/api/views/%s.json''' % (fbf)
     r = requests.get(qry)
+    print qry
     json = r.json()
     rowLabel =  None
-    rowIdentifier = None
     if "rowLabel" in  json['metadata'].keys():
       rowLabel =  json['metadata']['rowLabel']
-    if "resourceName" in  json.keys():
-      rowIdentifier = json['resourceName']
-
-    else:
-      print  json['metadata'].keys()
-    return { 'rowLabel': rowLabel, 'rowIdentifier': rowIdentifier}
+    if (rowLabel is None):
+      rowLabel =  'Row'
+    rowIdentifier = ProfileDatasets.getRowIdentifier(json)
+    rowsUpdatedAt =  ProfileDatasets.getLastUpdatedFromViews(json['rowsUpdatedAt'])
+    return { 'rowLabel': rowLabel, 'rowIdentifier': rowIdentifier, 'last_updt_dt_data': rowsUpdatedAt}
 
 
 
@@ -188,12 +204,13 @@ class ProfileDatasets:
     dataset_stats['global_field_percentage'] = ProfileDatasets.getCntAsPercent(dataset_stats['field_count'] , dataset_stats['global_field_count'])
     dataset_stats['documented_count'] = ProfileDatasets.getDocumentedFieldCnt(sQobj, dataset, mmdd_fbf)
     dataset_stats['documented_percentage'] = ProfileDatasets.getCntAsPercent(dataset_stats['field_count'], dataset_stats['documented_count'])
-    dataset_stats['days_since_last_updated'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['last_updt_dt_data'], dt_fmt)
-    dataset_stats['days_since_first_created'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['created_date'], dt_fmt)
     rowInfo = ProfileDatasets.getRowInfo(dataset['datasetid'])
     dataset_stats = DictUtils.merge_two_dicts(dataset_stats,rowInfo)
+    dataset_stats['days_since_last_updated'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['last_updt_dt_data'], dt_fmt)
+    dataset_stats['days_since_first_created'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['created_date'], dt_fmt)
     dataset_stats = DictUtils.filterDictOnBlanks(dataset_stats)
     dataset_stats = DictUtils.filterDictOnNans(dataset_stats)
+    dataset_stats['publishing_health'] =  ProfileDatasets.calculatePublishingHealth(dataset_stats)
     return  dataset_stats
 
   @staticmethod
@@ -205,6 +222,29 @@ class ProfileDatasets:
     rowInfo = ProfileDatasets.getRowInfo(dataset['datasetid'])
     dataset_stats = DictUtils.merge_two_dicts(dataset_stats,rowInfo)
     return  dataset_stats
+
+  @staticmethod
+  def calculatePublishingHealth(dataset_profile):
+    healthThresholds = {
+    'Streaming': [2,4],
+    'Daily' : [2,4],
+    'Weekly': [7,21],
+    'Monthly': [32, 90],
+    'Bi-annually': [60, 180],
+    'Annually': [365,500],
+    'Quarterly': [90, 270]
+    }
+    pubFreq =  dataset_profile['publishing_frequency']
+    dayslastUpdt = dataset_profile['days_since_last_updated']
+    if pubFreq in healthThresholds.keys():
+      timeIntervals = healthThresholds[pubFreq]
+      if int(dayslastUpdt <= timeIntervals[0]):
+        return 'On Time'
+      elif ((int(dayslastUpdt) > timeIntervals[0]) and (int(dayslastUpdt) <= timeIntervals[1])):
+        return 'Delayed'
+      elif (int(dayslastUpdt) > timeIntervals[1]):
+        return 'Stale'
+    return 'On Time'
 
 
   @staticmethod
@@ -224,12 +264,17 @@ class ProfileDatasets:
       for dataset in chunk:
         dataset_stats = {}
         if dataset['datasetid'] in ds_profile_keys:
-          if ( not ( DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt ))):
-            dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
-          else:
-          #  #print "just updating timestamp"
-            dataset_stats = ProfileDatasets.updt_dtStamp_from_events(sQobj, dataset)
+          #dataset_stats = ProfileDatasets.getDatasetStats(sQobj, dataset, mmdd_fbf, field_types, asset_inventory_dict)
+          #print "new dataset"
+          #datasets_stats.append(dataset_stats)
+          #print datasets_stats
+          #print
+          #if ( not ( DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt ))):
+          dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
           datasets_stats.append(dataset_stats)
+          #else:
+          #  print "just updating timestamp"
+          #  dataset_stats = ProfileDatasets.updt_dtStamp_from_events(sQobj, dataset)
         else:
           dataset_stats = ProfileDatasets.getDatasetStats(sQobj, dataset, mmdd_fbf, field_types, asset_inventory_dict)
           print "new dataset"

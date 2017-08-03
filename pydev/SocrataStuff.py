@@ -40,7 +40,7 @@ class SocrataClient:
         with open(clientConfigFile,  'r') as stream:
             try:
                 client_items = yaml.load(stream)
-                client = Socrata(client_items['url'],  client_items['app_token'], username=client_items['username'], password=base64.b64decode(client_items['password']))
+                client = Socrata(client_items['url'],  client_items['app_token'], username=client_items['username'], password=base64.b64decode(client_items['password']), access_token=None, session_adapter=None, timeout=client_items['timeout'])
                 return client
             except yaml.YAMLError as exc:
                 self._logger.error('Failed to open yaml file', exc_info=True)
