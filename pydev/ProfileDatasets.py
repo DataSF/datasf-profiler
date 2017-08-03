@@ -34,7 +34,6 @@ class ProfileDatasets:
   @staticmethod
   def getViewsLastUpdatedAt( datesetid,last_updt_dp):
     qry = '''https://data.sfgov.org/api/views/%s.json''' %(datesetid)
-    print qry
     r = requests.get( qry )
     view_info =  r.json()
     last_updt_views = view_info['rowsUpdatedAt']
@@ -105,7 +104,6 @@ class ProfileDatasets:
   def getRowInfo(fbf):
     qry = '''https://data.sfgov.org/api/views/%s.json''' % (fbf)
     r = requests.get(qry)
-    print qry
     json = r.json()
     rowLabel =  None
     if "rowLabel" in  json['metadata'].keys():
