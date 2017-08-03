@@ -72,7 +72,7 @@ class SocrataCRUD:
         self.src_records_cnt_field = configItems['src_records_cnt_field']
         self._logger = logger
 
-    @retry( tries=5, delay=1, backoff=2)
+    #@retry( tries=5, delay=1, backoff=2)
     def insertDataSet(self, dataset, insertDataSet):
         insertChunks = self.makeChunks(insertDataSet)
         #overwrite the dataset on the first insert chunk[0] if there is no row id
@@ -93,14 +93,14 @@ class SocrataCRUD:
         return dataset
 
 
-    @retry( tries=10, delay=1, backoff=2)
+    #@retry( tries=10, delay=1, backoff=2)
     def replaceDataSet(self, dataset, chunk):
         result = self.client.replace( dataset[self.fourXFour], chunk )
         dataset[self.rowsInserted] = dataset[self.rowsInserted] + int(result['Rows Created'])
         time.sleep(0.25)
 
 
-    @retry( tries=10, delay=1, backoff=2)
+    #@retry( tries=10, delay=1, backoff=2)
     def insertData(self, dataset, chunk):
         result = self.client.upsert(dataset[self.fourXFour], chunk)
         dataset[self.rowsInserted] = dataset[self.rowsInserted] + int(result['Rows Created']) + int(result['Rows Updated'])

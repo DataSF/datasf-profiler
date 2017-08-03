@@ -367,11 +367,11 @@ class ProfileFields:
             print
             field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
             new_field_profiles.append(field_profile)
-          elif field['field_type'] == 'numeric':
-            print field['field_name']
-            print
-            field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
-            new_field_profiles.append(field_profile)
+          #elif field['field_type'] == 'numeric':
+          #  print field['field_name']
+          #  print
+          #  field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
+          #  new_field_profiles.append(field_profile)
             #print "***updating date"
             #field_profile =  ProfileFields.updtDaysSinceLastUpdt(field)
         else:
