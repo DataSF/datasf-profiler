@@ -12,14 +12,17 @@ from ProfileFields import *
 from DictUtils import *
 import requests
 import time
-from datetime import date
+from datetime import date,timedelta
+from ConfigUtils import *
+
 
 class ProfileDatasets:
+
 
   @staticmethod
   def getAssetInventoryInfo(sQobj, base_url, fbf):
     '''returns a nested dict obj of all the datasetids as keys from the asset inventory; values dicts of pertinent asset inventory info'''
-    qryCols = '''u_id as datasetid, category, downloads, publishing_frequency, data_change_frequency, visits, description, name as dataset_name, keywords'''
+    qryCols = '''u_id as datasetid, category, downloads, publishing_frequency, data_change_frequency, visits, description, data_notes as notes, name as dataset_name, keywords WHERE public = 'true' '''
     results =  sQobj.pageThroughResultsSelect(fbf, qryCols)
     #qry = '''%s%s.json?$query=SELECT u_id as datasetid, category, downloads, publishing_frequency, data_change_frequency, visits ''' % (base_url, fbf)
     #results = sQobj.getQryFull(qry)
@@ -36,34 +39,55 @@ class ProfileDatasets:
     qry = '''https://data.sfgov.org/api/views/%s.json''' %(datesetid)
     r = requests.get( qry )
     view_info =  r.json()
-    last_updt_views = view_info['rowsUpdatedAt']
-    last_updt_views = datetime.datetime.utcfromtimestamp(last_updt_views)
-    columns = view_info['columns']
+    dataset_name =  view_info['name']
+    if('geo' in view_info['metadata']):
+      last_updt_views = ProfileDatasets.getMostRecentGeoUpdateDate(view_info)
+      last_updt_views =  datetime.datetime.strptime(last_updt_views, "%Y-%m-%dT%H:%M:%S")
+      columns = ProfileDatasets.getInfoFromGeoView( view_info, 'columns')
+    else:
+      last_updt_views = view_info['rowsUpdatedAt']
+      last_updt_views = datetime.datetime.utcfromtimestamp(last_updt_views)
+      columns = view_info['columns']
+
     column_names = [ datesetid + "_" + col['fieldName'] for col in columns ]
     last_updt_dp =  datetime.datetime.strptime(last_updt_dp, "%Y-%m-%dT%H:%M:%S")
-    if last_updt_views > last_updt_dp:
-      last_updt_views = last_updt_views.strftime('%Y-%m-%dT%H:%M:%S')
-      return [ {'columnid':col, 'last_updt_dt_data': last_updt_views } for col in column_names]
-    return []
+    #last_updt_dp_plus = last_updt_dp + datetime.timedelta(hours=0)
 
+    if last_updt_views > last_updt_dp:
+      print "***timestamps**:" +dataset_name  + " " + datesetid
+      print "***last_uptdt"
+      print last_updt_dp
+      print
+      print "**views"
+      print last_updt_views
+      print "*****"
+      last_updt_views = last_updt_views.strftime('%Y-%m-%dT%H:%M:%S')
+      return {'dataset_name': dataset_name, 'cols': [ {'columnid':col, 'last_updt_dt_data': last_updt_views} for col in column_names]}
+    return {}
 
 
 
   @staticmethod
   def getCurrentDatasetProfiles(sQobj, base_url, fbf, daily=False):
     '''gets dict of the the datasetid and the dt the dataset was updated; used for lookup purposes'''
-    qry = '''%s%s.json?$query=SELECT datasetid,  profile_last_updt_dt''' % (base_url, fbf)
+    qry = '''%s%s.json?$query=SELECT datasetid,  last_updt_dt_data  ''' % (base_url, fbf)
     if daily:
-      qry = '''%s%s.json?$query=SELECT datasetid,  profile_last_updt_dt WHERE publishing_frequency = 'Daily' OR publishing_frequency = 'Streaming' ''' % (base_url, fbf)
+      qry = '''%s%s.json?$query=SELECT datasetid, last_updt_dt_data WHERE (publishing_frequency = 'Daily' OR publishing_frequency = 'Streaming')  ''' % (base_url, fbf)
     dictList = PandasUtils.resultsToDictList(sQobj, qry)
-    return PandasUtils.getDictListAsMappedDict('datasetid', 'profile_last_updt_dt', dictList)
+    return PandasUtils.getDictListAsMappedDict('datasetid', 'last_updt_dt_data', dictList)
 
   @staticmethod
-  def getCurrentDatasetProfilesDescription(sQobj, base_url, fbf, datasetid):
+  def getTriggerToRefreshFields(sQobj, base_url, fbf, datasetid, colKey):
     '''gets dict of the the datasetid and the dt the dataset was updated; used for lookup purposes'''
-    qry = '''%s%s.json?$query=SELECT description where datasetid = '%s' ''' % (base_url, fbf, datasetid)
+    qry = '''%s%s.json?$query=SELECT %s where datasetid = '%s' ''' % (base_url, fbf, colKey, datasetid)
     dictList = PandasUtils.resultsToDictList(sQobj, qry)
-    return dictList[0]
+    if(dictList is None):
+      return ""
+    else:
+      itemTest = dictList[0]
+      if colKey in itemTest.keys():
+        return itemTest[colKey]
+    return ""
 
   @staticmethod
   def joinAuxDataSetInfo(dataset, asset_inventory_dict):
@@ -77,8 +101,7 @@ class ProfileDatasets:
   def getBaseDatasets(sQobj, base_url, fbf):
     '''returns a list of datasets from the master data dictionary dataset'''
     #qry =  '''%s%s.json?$query=SELECT datasetid, nbeid, last_updt_dt_data, dataset_name, department, created_date,  count(*) as value  WHERE privateordeleted != true and nbeid IS NOT NULL GROUP BY datasetid, nbeid, last_updt_dt_data, dataset_name, department, created_date ''' % (base_url, fbf)
-    qry =  '''%s%s.json?$query=SELECT datasetid, nbeid, last_updt_dt_data, department, created_date,  count(*) as value  WHERE privateordeleted != true and nbeid IS NOT NULL GROUP BY datasetid, nbeid, last_updt_dt_data, department, created_date ''' % (base_url, fbf)
-
+    qry =  '''%s%s.json?$query=SELECT datasetid, nbeid, last_updt_dt_data, department, created_date, dataset_name,  count(*) as value  WHERE privateordeleted != true and nbeid IS NOT NULL GROUP BY datasetid, nbeid, last_updt_dt_data, department, created_date, dataset_name ''' % (base_url, fbf)
     df = PandasUtils.resultsToDf(sQobj, qry)
     df['base_url'] = base_url
     df =  PandasUtils.fillNaWithBlank(df)
@@ -100,35 +123,63 @@ class ProfileDatasets:
         cols = json['columns']
         rowIdentifierName = [col['name'] for col in cols if col['id'] == rowIdentifier]
         if len(rowIdentifierName ) > 0:
-
           return rowIdentifierName[0]
         else:
           print "****ERROR: something went wrong with parsing the row_id"
           print rowIdentifier
-          print json
           print "*******"
           return None
     return None
+
   @staticmethod
-  def getLastUpdatedFromViews(epochTime):
-    last_updt_views = datetime.datetime.utcfromtimestamp(epochTime)
-    last_updt_views = last_updt_views.strftime('%Y-%m-%dT%H:%M:%S')
-    return last_updt_views
+  def getInfoFromGeoView(json, key):
+    if 'layers' in json['metadata']['geo']:
+      geoFbf =  json['metadata']['geo']['layers']
+      qry = '''https://data.sfgov.org/api/views/%s.json''' %(geoFbf)
+      r = requests.get( qry )
+      view_info =  r.json()
+      if key in view_info.keys():
+        return view_info[key]
+    return None
+
+  @staticmethod
+  def getMostRecentGeoUpdateDate(json):
+    if 'layers' in json['metadata']['geo']:
+      rowsUpdatedAtUTC = ProfileDatasets.getInfoFromGeoView(json, 'rowsUpdatedAt')
+      if rowsUpdatedAtUTC:
+        rowsUpdatedAt = datetime.datetime.utcfromtimestamp(rowsUpdatedAtUTC)
+        rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
+        return rowsUpdatedAt
+    return ''
+
+  @staticmethod
+  def getLastUpdatedFromViews(json):
+    rowsUpdatedAt = ''
+    if('geo' in json['metadata']):
+      print "***** this is a geo dataset******"
+      return ProfileDatasets.getMostRecentGeoUpdateDate(geoFbf)
+    else:
+      if ('rowsUpdatedAt' in json.keys()):
+        rowsUpdatedAt = datetime.datetime.utcfromtimestamp(json['rowsUpdatedAt'])
+        rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
+    return rowsUpdatedAt
+
+  @staticmethod
+  def getRowLabel(json):
+    rowLabel = "Row"
+    if "rowLabel" in  json['metadata'].keys():
+      if json['metadata']['rowLabel'] != '':
+        rowLabel = json['metadata']['rowLabel']
+    return rowLabel
 
   @staticmethod
   def getRowInfo(fbf):
     qry = '''https://data.sfgov.org/api/views/%s.json''' % (fbf)
     r = requests.get(qry)
     json = r.json()
-    rowLabel =  None
-    rowsUpdatedAt = ''
-    if "rowLabel" in  json['metadata'].keys():
-      rowLabel =  json['metadata']['rowLabel']
-    if (rowLabel is None):
-      rowLabel =  'Row'
+    rowLabel = ProfileDatasets.getRowLabel(json)
     rowIdentifier = ProfileDatasets.getRowIdentifier(json)
-    if 'rowsUpdatedAt' in json.keys():
-      rowsUpdatedAt =  ProfileDatasets.getLastUpdatedFromViews(json['rowsUpdatedAt'])
+    rowsUpdatedAt = ProfileDatasets.getLastUpdatedFromViews(json)
     return { 'rowLabel': rowLabel, 'rowIdentifier': rowIdentifier, 'last_updt_dt_data': rowsUpdatedAt}
 
 
@@ -173,7 +224,6 @@ class ProfileDatasets:
       qry = qry_num_fields + "'" + ft.lower()  +"'" + ' GROUP BY field_type'
       dataset_stats[label] = ProfileFields.getResults(sQobj, qry)
     dataset_stats['record_count'] = ProfileFields.getTotal(sQobj, dataset['base_url'], dataset['nbeid'])
-    dataset_stats['profile_last_updt_dt'] = DateUtils.get_current_timestamp()
     return dataset_stats
 
   @staticmethod
@@ -218,11 +268,16 @@ class ProfileDatasets:
     dataset_stats['documented_percentage'] = ProfileDatasets.getCntAsPercent(dataset_stats['field_count'], dataset_stats['documented_count'])
     rowInfo = ProfileDatasets.getRowInfo(dataset['datasetid'])
     dataset_stats = DictUtils.merge_two_dicts(dataset_stats,rowInfo)
+    if(rowInfo['last_updt_dt_data'] != ''):
+      dataset_stats['last_updt_dt_data'] =  rowInfo['last_updt_dt_data']
     dataset_stats['days_since_last_updated'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['last_updt_dt_data'], dt_fmt)
     dataset_stats['days_since_first_created'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['created_date'], dt_fmt)
     dataset_stats = DictUtils.filterDictOnBlanks(dataset_stats)
     dataset_stats = DictUtils.filterDictOnNans(dataset_stats)
     dataset_stats['publishing_health'] =  ProfileDatasets.calculatePublishingHealth(dataset_stats)
+    dataset_stats['profile_last_updt_dt'] = DateUtils.get_current_timestamp()
+    if('description' not in dataset_stats.keys() ):
+      dataset_stats['description'] = "Description not availible."
     return  dataset_stats
 
   @staticmethod
@@ -258,6 +313,41 @@ class ProfileDatasets:
         return 'Stale'
     return 'On Time'
 
+  @staticmethod
+  def removeDiff(scrud, fbfToDelete, first, second):
+    def diff(first, second):
+        second = set(second)
+        return [item for item in first if item not in second]
+    diffList =  diff(first, second)
+    print "****delete these datasets: "
+    print diffList
+    print
+    if len(diffList) >0:
+      print "items to delete: "
+      print diffList
+      for item in diffList:
+        try:
+          print "***deleting**: " + item
+          print scrud.deleteRow(fbfToDelete, item)
+          print "*****"
+        except Exception, e:
+          print str(e)
+          print "ERROR: **Could not delete row***"
+    else:
+      print "**No items to delete***"
+    return True
+
+
+  @staticmethod
+  def removeDeletedDatasets(scrud,  ds_profiles_fbf, asset_inventory_dict, ds_profiles, datasets):
+    '''removes datasets from dataset profiles that have been deleted '''
+    dataset_keys = [item['datasetid'] for item in datasets]
+    asset_inventory_keys = asset_inventory_dict.keys()
+    ds_profiles_keys = ds_profiles.keys()
+    print "***deleting from asset inventory***"
+    ProfileDatasets.removeDiff(scrud, ds_profiles_fbf, ds_profiles_keys, asset_inventory_keys)
+    print "***deleting becasue not in master dd***"
+    ProfileDatasets.removeDiff(scrud, ds_profiles_fbf, ds_profiles_keys, dataset_keys)
 
   @staticmethod
   def buildInsertDatasetProfiles(sQobj, scrud, configItems, datasets, ds_profiles, field_types, asset_inventory_dict):
@@ -274,27 +364,17 @@ class ProfileDatasets:
     for chunk in datasets_chunks:
       datasets_stats = []
       for dataset in chunk:
-        dataset_stats = {}
+        #dataset_stats = {}
         if dataset['datasetid'] in ds_profile_keys:
-          description = ProfileDatasets.getCurrentDatasetProfilesDescription(sQobj, base_url, ds_profiles_fbf, dataset['datasetid'] )
-          if ( not ( DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt ))):
-            print "updating bc more recent exisits"
-            print dataset
-            dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
-            datasets_stats.append(dataset_stats)
-          elif('description' not in description.keys()):
-            print "** updating if without descript ****"
-            print dataset
-            dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
-            datasets_stats.append(dataset_stats)
-          #else:
-            #print "did not update" + dataset['datasetid']
-          #  print "just updating timestamp"
-          #  dataset_stats = ProfileDatasets.updt_dtStamp_from_events(sQobj, dataset)
+            #print DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt, offset_t1=0, offset_t2=0 )
+            if ( DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt, offset_t1=0, offset_t2=0 )):
+              print "more recent; updating: " + dataset['dataset_name']+ "- " + dataset['datasetid']
+              dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
+              datasets_stats.append(dataset_stats)
         else:
-          print dataset
           dataset_stats = ProfileDatasets.getDatasetStats(sQobj, dataset, mmdd_fbf, field_types, asset_inventory_dict)
-          print "new dataset"
+          print
+          print "new dataset: " + dataset['dataset_name'] + "- " + dataset['datsetid']
           datasets_stats.append(dataset_stats)
           print datasets_stats
           print
@@ -310,3 +390,8 @@ class ProfileDatasets:
     dataset_info['SrcRecordsCnt'] = src_records
     dataset_info['DatasetRecordsCnt'] = inserted_records
     return dataset_info
+
+
+
+if __name__ == "__main__":
+    main()

@@ -38,7 +38,7 @@ class DateUtils:
         return datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
     @staticmethod
-    def compare_two_timestamps(t1, t2, dt_format1=None, dt_format2=None):
+    def compare_two_timestamps(t1, t2, dt_format1=None, dt_format2=None, offset_t1=None, offset_t2=None):
         '''compares two timestamps a particular time format;
            returns the true when t1 is larger than t2'''
         default_time_format = '%Y-%m-%dT%H:%M:%S.%fZ'
@@ -48,11 +48,19 @@ class DateUtils:
             dt_format2 =  default_time_format
         t1_dtt =  datetime.datetime.strptime(t1,dt_format1)
         t2_dtt =  datetime.datetime.strptime(t2,dt_format2)
+        if(offset_t1):
+            t1_dtt = t1_dtt + datetime.timedelta(hours=offset_t1)
+        if(offset_t2):
+            t2_dtt = t2_dtt + datetime.timedelta(hours=offset_t2)
         t1_dtt = t1_dtt.replace(second=0, microsecond=0)
         t2_dtt = t2_dtt.replace(second=0, microsecond=0)
-        if t1_dtt > t2_dtt:
+        #print t1_dtt
+        #print t2_dtt
+        if t1_dtt == t2_dtt:
+            return False
+        elif t1_dtt < t2_dtt:
             return True
-        elif t2_dtt > t1_dtt:
+        elif t1_dtt > t2_dtt:
             return False
         return False
 

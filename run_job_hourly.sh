@@ -43,6 +43,8 @@ while getopts "h?:d:c:p:j:n:" opt; do
         ;;
     p)  python_path=$OPTARG
         ;;
+    t)  hourly=$OPTARG
+        ;;
     #j)  python_job=$OPTARG
         ;;
     #n)  job_type=$OPTARG
@@ -71,15 +73,18 @@ if [ -z "$python_path" ]; then
 fi
 
 
+
 config1="configs/"
 config_dir=$path_to_main_dir$config1
 pydev="pydev/"
 
 
 #update the metadata fields
-$python_job1='profile_datasets_daily.py'
+$python_job1='profile_datasets.py'
 $job_type1="profile_datasets"
 $python_job2='profile_fields.py'
 $job_type2="profile_fields"
-$python_path $path_to_main_dir$pydev$python_job1 -c $config_fn -d $config_dir -n $job_type1
+$hourly=1
+$python_path $path_to_main_dir$pydev$python_job1 -c $config_fn -d $config_dir -n $job_type1 -t $hourly
+
 $python_path $path_to_main_dir$pydev$python_job2 -c $config_fn -d $config_dir -n $job_type2

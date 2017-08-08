@@ -17,9 +17,9 @@ class ProfileFields:
 
   @staticmethod
   def getCurrentFieldProfiles(sQobj, base_url, fbf ):
-    qryCols = '''columnid, profile_last_updt_dt'''
+    qryCols = '''columnid, last_updt_dt_data'''
     results =  sQobj.pageThroughResultsSelect(fbf, qryCols)
-    return PandasUtils.getDictListAsMappedDict('columnid', 'profile_last_updt_dt', results)
+    return PandasUtils.getDictListAsMappedDict('columnid', 'last_updt_dt_data', results)
 
   @staticmethod
   def get_field_lengths(sQobj, base_url, nbeId, fieldName, fieldType):
@@ -341,6 +341,14 @@ class ProfileFields:
     return field_
 
   @staticmethod
+  def removeDeletedFields(scrud, field_profiles_fbf, master_dfList, field_profiles):
+    '''removes datasets from dataset profiles that have been deleted '''
+    masterdd_dict_keys = [masterdd_dict_item['columnid'] for masterdd_dict_item in master_dfList]
+    field_profiles_keys = field_profiles.keys()
+    ProfileDatasets.removeDiff(scrud, field_profiles_fbf, field_profiles_keys, masterdd_dict_keys)
+
+
+  @staticmethod
   def buildInsertFieldProfiles(sQobj, scrud, configItems, master_dfList, current_field_profiles):
     def timeout_handler(signum, frame):   # Custom signal handler
       raise TimeoutException
@@ -354,7 +362,7 @@ class ProfileFields:
     row_id = configItems['dd']['field_profiles']['row_id']
     base_url =  configItems['baseUrl']
     profile_keys = current_field_profiles.keys()
-    field_chunks = ListUtils.makeChunks(master_dfList, 10)
+    field_chunks = ListUtils.makeChunks(master_dfList, 20)
     dataset_info = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': field_profile_fbf, 'row_id': row_id}
     for chunk in field_chunks:
       new_field_profiles = []
@@ -362,18 +370,16 @@ class ProfileFields:
         field_profile = {}
         if field['columnid'] in profile_keys:
           if ( not ( DateUtils.compare_two_timestamps( current_field_profiles[field['columnid']],  field['last_updt_dt_data'], dt_fmt , dt_fmt ))):
-            #print "**** updated field****"
-            print field['field_name']
-            print
+            print "**** updated field: " + field['field_name'] + "****"
             field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
             new_field_profiles.append(field_profile)
           #elif field['field_type'] == 'numeric':
-          #  print field['field_name']
-          #  print
-          #  field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
-          #  new_field_profiles.append(field_profile)
-            #print "***updating date"
-            #field_profile =  ProfileFields.updtDaysSinceLastUpdt(field)
+          #  if ( not ( DateUtils.compare_two_timestamps( field['last_updt_dt_data'],  '2017-08-01T00:00:00', dt_fmt , dt_fmt ))):
+          #    print "numeric field " + field['field_name']
+          #    field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
+          #    new_field_profiles.append(field_profile)
+            #field_profile = ProfileFields.profileField(sQobj,field, dt_fmt_fields)
+            #new_field_profiles.append(field_profile)
         else:
           print "**** new field****"
           print field['field_name']

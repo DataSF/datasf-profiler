@@ -63,3 +63,4 @@ dd:
     fbf: 6u88-vc79
 
 migration_qry_url: https://data.sfgov.org/api/migrations/
+webtask_config_fn: webtask_configs.yaml

@@ -72,6 +72,9 @@ class SocrataCRUD:
         self.src_records_cnt_field = configItems['src_records_cnt_field']
         self._logger = logger
 
+    def deleteRow(self, fbf, rowId):
+        return self.client.delete(fbf, row_id=rowId)
+
     #@retry( tries=5, delay=1, backoff=2)
     def insertDataSet(self, dataset, insertDataSet):
         insertChunks = self.makeChunks(insertDataSet)
@@ -152,6 +155,7 @@ class SocrataCRUD:
             print str(e)
             self._logger.info(str(e))
         return row_count
+
 
 
 class SocrataQueries:
