@@ -15,24 +15,18 @@ display_help() {
     echo
     echo "   -p, --python path  -- path to python- ie run which python to find out"
     echo
-    # echo "   -j, --python job file  --python job file- ie the job you wan to run; ex: grab_asset_fields_defs.py or upload_screendoor_responses"
+    echo "   -t, --hourly  --hourly- ie run the job hourly or not"
     echo
-    #echo "  - n  --name of job --- name of job you want to run- should match the jobs in the config file "
-    echo "***example usage: /home/ubuntu/metadata-mgmt-tool/run_job.sh -d /home/ubuntu/metadata-mgmt-tool/ -j grab_asset_field_defs.py -p /home/ubuntu/miniconda2/bin/python -c fieldConfig_grab_asset_field_defs_server.yaml"
-    echo "***example usage: /home/ubuntu/metadata-mgmt-tool/run_job.sh -d /home/ubuntu/metadata-mgmt-tool/ -j grab_datadictionary_attachments_defs.py -p /home/ubuntu/miniconda2/bin/python -c fieldConfig_existing_datadicts_server.yaml"
-    echo "***example usage: /home/ubuntu/metadata-mgmt-tool/run_job.sh -d /home/ubuntu/metadata-mgmt-tool/ -j upload_screendoor_responses.py -p /home/ubuntu/miniconda2/bin/python -c fieldConfig_import_wkbks_server.yaml"
-    echo "***example usage: /home/ubuntu/metadata-mgmt-tool/run_job.sh -d /home/ubuntu/metadata-mgmt-tool/ -j generate_wkbks.py -p /home/ubuntu/miniconda2/bin/python -c fieldConfig_generate_wkbks_server.yaml"
+    echo " ./run_job_update_profiles.sh -d /Users/j9/Desktop/datasf-profiler/ -c fieldConfig_profiler_desktop.yaml -t 1 -p /usr/local/bin/python"
     exit 1
 }
 # Initialize our own variables:
 path_to_main_dir=""
-config_file=""
+config_fn=""
 python_path=""
-python_job=""
-job_type=""
-hourly=0
+hourly=""
 
-while getopts "h?:d:c:p:j:n:" opt; do
+while getopts "h?:d:c:p:t:" opt; do
     case "$opt" in
     h|\?)
         display_help
@@ -46,14 +40,11 @@ while getopts "h?:d:c:p:j:n:" opt; do
         ;;
     t)  hourly=$OPTARG
         ;;
-    #j)  python_job=$OPTARG
-        ;;
-    #n)  job_type=$OPTARG
-        ;;
     esac
 done
 
 shift $((OPTIND-1))
+
 
 
 #[ "$1" = "--" ] && shift
@@ -74,17 +65,22 @@ if [ -z "$python_path" ]; then
 fi
 
 
-
 config1="configs/"
 config_dir=$path_to_main_dir$config1
 pydev="pydev/"
 
 
 #update the metadata fields
-$python_job1='profile_datasets.py'
-$job_type1="profile_datasets"
-$python_job2='profile_fields.py'
-$job_type2="profile_fields"
+python_job1="profile_datasets.py"
+job_type1="profile_datasets"
+python_job2="profile_fields.py"
+job_type2="profile_fields"
 
-$python_path $path_to_main_dir$pydev$python_job1 -c $config_fn -d $config_dir -n $job_type1 -t $hourly
+if [ "$hourly" == "1" ]; then
+    echo "***this is hourly run***"
+    $python_path $path_to_main_dir$pydev$python_job1 -c $config_fn -d $config_dir -n $job_type1 -t $hourly
+else
+    echo "***this is the daily run***"
+    $python_path $path_to_main_dir$pydev$python_job1 -c $config_fn -d $config_dir -n $job_type1
+fi
 $python_path $path_to_main_dir$pydev$python_job2 -c $config_fn -d $config_dir -n $job_type2
