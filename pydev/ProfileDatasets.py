@@ -157,7 +157,7 @@ class ProfileDatasets:
     rowsUpdatedAt = ''
     if('geo' in json['metadata']):
       print "***** this is a geo dataset******"
-      return ProfileDatasets.getMostRecentGeoUpdateDate(geoFbf)
+      return ProfileDatasets.getMostRecentGeoUpdateDate(json)
     else:
       if ('rowsUpdatedAt' in json.keys()):
         rowsUpdatedAt = datetime.datetime.utcfromtimestamp(json['rowsUpdatedAt'])
