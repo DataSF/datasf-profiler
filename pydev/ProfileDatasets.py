@@ -374,10 +374,12 @@ class ProfileDatasets:
         else:
           dataset_stats = ProfileDatasets.getDatasetStats(sQobj, dataset, mmdd_fbf, field_types, asset_inventory_dict)
           print
-          print "new dataset: " + dataset['dataset_name'] + "- " + dataset['datsetid']
-          datasets_stats.append(dataset_stats)
-          print datasets_stats
+          print "new dataset!*****"
+          print dataset_stats
           print
+          datasets_stats.append(dataset_stats)
+          #print datasets_stats
+          #print
       if len(datasets_stats) > 0:
         dataset_info['DatasetRecordsCnt'] = 0
         dataset_info['SrcRecordsCnt'] = len(datasets_stats)
