@@ -21,16 +21,17 @@ class WebTasks:
         response = urllib2.urlopen(url, timeout = 15)
         content = response.read()
         if(content):
-          #f = open( "local/index.html", 'w' )
-          #f.write( content )
-          #f.close()
+          f = open( configItems['log_dir'] + "algolia-sync-results.json", 'w' )
+          f.write( content )
+          f.close()
+          return True
           break
 
       except urllib2.URLError as e:
         attempts += 1
         print type(e)
         return False
-    return True
+    return False
 
 
 
