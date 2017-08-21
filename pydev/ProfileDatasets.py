@@ -301,6 +301,8 @@ class ProfileDatasets:
     'Annually': [365,500],
     'Quarterly': [90, 270]
     }
+    if 'publishing_frequency' not in dataset_profile.keys():
+      return 'Unknown'
     pubFreq =  dataset_profile['publishing_frequency']
     dayslastUpdt = dataset_profile['days_since_last_updated']
     if pubFreq in healthThresholds.keys():
