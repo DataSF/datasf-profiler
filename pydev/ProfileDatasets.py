@@ -40,7 +40,6 @@ class ProfileDatasets:
     columns = []
     qry = '''https://data.sfgov.org/api/views/%s.json''' %(datesetid)
     r = requests.get( qry )
-    print qry
     view_info =  r.json()
     #print view_info
     if 'code' in view_info.keys() and 'message' in view_info.keys():
@@ -168,7 +167,6 @@ class ProfileDatasets:
       #print geoFbf
       qry = '''https://data.sfgov.org/api/views/%s.json''' %(geoFbf[0])
       r = requests.get( qry )
-      print qry
       try:
         view_info =  r.json()
         if key in view_info.keys():
@@ -221,7 +219,7 @@ class ProfileDatasets:
   @staticmethod
   def getRowInfo(fbf):
     qry = '''https://data.sfgov.org/api/views/%s.json''' % (fbf)
-    print qry
+    #print qry
     r = requests.get(qry)
     json = r.json()
     rowLabel = ProfileDatasets.getRowLabel(json)
