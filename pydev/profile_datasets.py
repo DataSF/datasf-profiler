@@ -65,7 +65,6 @@ def parse_opts():
   return fieldConfigFile, config_inputdir, jobType, hourly
 
 
-
 def main():
   fieldConfigFile, config_inputdir, jobType, hourly = parse_opts()
   cI =  ConfigUtils(config_inputdir,fieldConfigFile  )
@@ -86,9 +85,7 @@ def main():
   field_type_fbf =  configItems['dd']['field_type']['fbf']
   asset_inventory_fbf =  configItems['dd']['asset_inventory']['fbf']
 
-  ds_profiles = ProfileDatasets.getCurrentDatasetProfiles(sQobj, base_url, ds_profiles_fbf, True)
-
-
+  ds_profiles = ProfileDatasets.getCurrentDatasetProfiles(sQobj, base_url, ds_profiles_fbf)
   update_counter = 0
   updated_datasets = []
 
@@ -96,7 +93,7 @@ def main():
   if int(hourly) == 1:
     print "****hourly update****"
     for datasetid,last_updt in ds_profiles.iteritems():
-      mm_profiles_to_updt =  ProfileDatasets.getViewsLastUpdatedAt(datasetid,last_updt)
+      mm_profiles_to_updt =  ProfileDatasets.getViewsLastUpdatedAt(datasetid,last_updt, clientItems)
       #print mm_profiles_to_updt
       if('cols' in mm_profiles_to_updt.keys()):
         dataset_info_mm = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': mmdd_fbf, 'row_id': 'columnid'}
@@ -112,6 +109,7 @@ def main():
     print ",".join(updated_datasets)
     print "*************"
     print "**************"
+
   datasets = ProfileDatasets.getBaseDatasets(sQobj, base_url,  mmdd_fbf)
   asset_inventory_dict = ProfileDatasets.getAssetInventoryInfo(sQobj, base_url,  asset_inventory_fbf)
   #delete datasets from the profile that no longer exist
