@@ -39,8 +39,13 @@ class ProfileDatasets:
     privateordeleted = False
     columns = []
     qry = '''https://data.sfgov.org/api/views/%s.json''' %(datesetid)
-    r = requests.get( qry )
-    view_info =  r.json()
+    try: 
+      r = requests.get( qry )
+      view_info =  r.json()
+    except Exception e:
+      print "ERROR: something went wrong"
+      print str(e)
+      return {}
     #print view_info
     if 'code' in view_info.keys() and 'message' in view_info.keys():
       print "*** error message "
