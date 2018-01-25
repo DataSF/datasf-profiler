@@ -42,8 +42,8 @@ class ProfileDatasets:
     try: 
       r = requests.get( qry )
       view_info =  r.json()
-    except Exception e:
-      print "ERROR: something went wrong"
+    except Exception, e:
+      print "ERROR: something went wrong with %s" %(datasetid)
       print str(e)
       return {}
     #print view_info
