@@ -65,7 +65,7 @@ class ProfileDatasets:
         return {}
     try:
       dataset_name =  view_info['name']
-    except Exception e:
+    except Exception, e:
       print str(e)
       print view_info
     if('geo' in view_info['metadata']):
