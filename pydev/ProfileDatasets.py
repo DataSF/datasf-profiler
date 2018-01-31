@@ -63,7 +63,11 @@ class ProfileDatasets:
       elif view_info['code'] == 'not_found':
         print "*** Dataset not found ****"
         return {}
-    dataset_name =  view_info['name']
+    try:
+      dataset_name =  view_info['name']
+    except Exception e:
+      print str(e)
+      print view_info
     if('geo' in view_info['metadata']):
       last_updt_views = ProfileDatasets.getMostRecentGeoUpdateDate(view_info)
       try:
