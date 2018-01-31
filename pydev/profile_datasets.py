@@ -90,18 +90,18 @@ def main():
   updated_datasets = []
 
 
-  if int(hourly) == 1:
-    print "****hourly update****"
-    for datasetid,last_updt in ds_profiles.iteritems():
-      mm_profiles_to_updt =  ProfileDatasets.getViewsLastUpdatedAt(datasetid,last_updt, clientItems)
-      #print mm_profiles_to_updt
-      if('cols' in mm_profiles_to_updt.keys()):
-        dataset_info_mm = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': mmdd_fbf, 'row_id': 'columnid'}
-        dataset_info_mm['DatasetRecordsCnt'] = 0
-        dataset_info_mm['SrcRecordsCnt'] = len(mm_profiles_to_updt['cols'])
-        dataset_info_mm = scrud.postDataToSocrata(dataset_info_mm, mm_profiles_to_updt['cols'])
-        update_counter = update_counter + 1
-        updated_datasets.append(mm_profiles_to_updt['dataset_name'])
+  #if int(hourly) == 1:
+  #  print "****hourly update****"
+  for datasetid,last_updt in ds_profiles.iteritems():
+    mm_profiles_to_updt =  ProfileDatasets.getViewsLastUpdatedAt(datasetid,last_updt, clientItems)
+    #print mm_profiles_to_updt
+    if('cols' in mm_profiles_to_updt.keys()):
+      dataset_info_mm = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': mmdd_fbf, 'row_id': 'columnid'}
+      dataset_info_mm['DatasetRecordsCnt'] = 0
+      dataset_info_mm['SrcRecordsCnt'] = len(mm_profiles_to_updt['cols'])
+      dataset_info_mm = scrud.postDataToSocrata(dataset_info_mm, mm_profiles_to_updt['cols'])
+      update_counter = update_counter + 1
+      updated_datasets.append(mm_profiles_to_updt['dataset_name'])
 
     print "***************"
     print "Updating " + str(update_counter) + " dataset profiles....."
