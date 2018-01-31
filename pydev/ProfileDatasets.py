@@ -21,6 +21,7 @@ class ProfileDatasets:
 
   @staticmethod
   def getAssetInventoryInfo(sQobj, base_url, fbf):
+    print 
     '''returns a nested dict obj of all the datasetids as keys from the asset inventory; values dicts of pertinent asset inventory info'''
     qryCols = '''u_id as datasetid, category, downloads, publishing_frequency, data_change_frequency, visits, description, data_notes as notes, name as dataset_name, keywords WHERE public = 'true' '''
     results =  sQobj.pageThroughResultsSelect(fbf, qryCols)
@@ -104,8 +105,8 @@ class ProfileDatasets:
   def getCurrentDatasetProfiles(sQobj, base_url, fbf, clientItems=None, daily=False):
     '''gets dict of the the datasetid and the dt the dataset was updated; used for lookup purposes'''
     qry = '''%s%s.json?$query=SELECT datasetid,  last_updt_dt_data  ''' % (base_url, fbf)
-    if daily:
-      qry = '''%s%s.json?$query=SELECT datasetid, last_updt_dt_data WHERE (publishing_frequency = 'Daily' OR publishing_frequency = 'Streaming')  ''' % (base_url, fbf)
+    #if daily:
+    #  qry = '''%s%s.json?$query=SELECT datasetid, last_updt_dt_data WHERE (publishing_frequency = 'Daily' OR publishing_frequency = 'Streaming')  ''' % (base_url, fbf)
     dictList = PandasUtils.resultsToDictList(sQobj, qry)
     return PandasUtils.getDictListAsMappedDict('datasetid', 'last_updt_dt_data', dictList)
 
@@ -233,7 +234,6 @@ class ProfileDatasets:
     return { 'rowLabel': rowLabel, 'rowIdentifier': rowIdentifier, 'last_updt_dt_data': rowsUpdatedAt}
 
 
-
   @staticmethod
   def getDatasetDupes(sQobj, mmdd_fbf, dataset):
     '''finds the number of ROW level duplicates in the dataset'''
@@ -330,6 +330,29 @@ class ProfileDatasets:
       dataset_stats['description'] = "Description not availible."
     return  dataset_stats
 
+
+  def getDatasetHealthForAll(sQobj, dataset, mmdd_fbf, field_types, asset_inventory_dict):
+    dataset_stats = {}
+    dt_fmt = '%Y-%m-%dT%H:%M:%S'
+    auxInfo = ProfileDatasets.joinAuxDataSetInfo(dataset_stats, asset_inventory_dict)
+    if len(auxInfo.keys()) > 0:
+      dataset_stats = DictUtils.merge_two_dicts(dataset_stats, auxInfo)
+    else:
+      dataset_stats = DictUtils.merge_two_dicts(dataset, dataset_stats)
+    #rowInfo = ProfileDatasets.getRowInfo(dataset['datasetid'])
+    #dataset_stats = DictUtils.merge_two_dicts(dataset_stats,rowInfo)
+    #if(rowInfo['last_updt_dt_data'] != ''):
+    #  dataset_stats['last_updt_dt_data'] =  rowInfo['last_updt_dt_data']
+    dataset_stats['days_since_last_updated'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['last_updt_dt_data'], dt_fmt)
+    dataset_stats['days_since_first_created'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['created_date'], dt_fmt)
+    dataset_stats = DictUtils.filterDictOnBlanks(dataset_stats)
+    dataset_stats = DictUtils.filterDictOnNans(dataset_stats)
+    dataset_stats['publishing_health'] =  ProfileDatasets.calculatePublishingHealth(dataset_stats)
+    dataset_stats['profile_last_updt_dt'] = DateUtils.get_current_timestamp()
+    #if('description' not in dataset_stats.keys() ):
+    #  dataset_stats['description'] = "Description not availible."
+    return  dataset_stats
+
   @staticmethod
   def updt_dtStamp_from_events(sQobj, dataset):
     dataset_stats = {'datasetid': dataset['datasetid']}
@@ -422,6 +445,9 @@ class ProfileDatasets:
             if ( DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt, offset_t1=0, offset_t2=0 )):
               print "more recent; updating: " + dataset['dataset_name']+ "- " + dataset['datasetid']
               dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
+              datasets_stats.append(dataset_stats)
+            else:
+              dataset_stats = ProfileDatasets.getDatasetHealthForAll(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
               datasets_stats.append(dataset_stats)
         else:
           dataset_stats = ProfileDatasets.getDatasetStats(sQobj, dataset, mmdd_fbf, field_types, asset_inventory_dict)
