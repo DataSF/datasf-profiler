@@ -335,6 +335,7 @@ class ProfileDatasets:
     return  dataset_stats
 
 
+  @staticmethod
   def getDatasetHealthForAll(sQobj, dataset, mmdd_fbf, field_types, asset_inventory_dict):
     dataset_stats = {}
     dt_fmt = '%Y-%m-%dT%H:%M:%S'
