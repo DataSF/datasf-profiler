@@ -71,17 +71,18 @@ class ProfileDatasets:
       print view_info
     print 
     print view_info
-    if('geo' in view_info['metadata']):
-      last_updt_views = ProfileDatasets.getMostRecentGeoUpdateDate(view_info)
-      try:
-        last_updt_views =  datetime.datetime.strptime(last_updt_views, "%Y-%m-%dT%H:%M:%S")
-        columns = ProfileDatasets.getInfoFromGeoView( view_info, 'columns')
-      except Exception, e:
-        print str(e)
-        print "*** ERROR***** "
-        print dataset_name
-        print qry
-        print "************"
+    if 'metadata' in view_info.keys():
+      if('geo' in view_info['metadata']):
+        last_updt_views = ProfileDatasets.getMostRecentGeoUpdateDate(view_info)
+        try:
+          last_updt_views =  datetime.datetime.strptime(last_updt_views, "%Y-%m-%dT%H:%M:%S")
+          columns = ProfileDatasets.getInfoFromGeoView( view_info, 'columns')
+        except Exception, e:
+          print str(e)
+          print "*** ERROR***** "
+          print dataset_name
+          print qry
+          print "************"
     else:
       last_updt_views = view_info['rowsUpdatedAt']
       last_updt_views = datetime.datetime.utcfromtimestamp(last_updt_views)
