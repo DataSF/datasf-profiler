@@ -108,7 +108,7 @@ class ProfileDatasets:
       print
       print "**views"
       print last_updt_views
-      print "*****"
+      print "***dddd**"
       last_updt_views = last_updt_views.strftime('%Y-%m-%dT%H:%M:%S')
       return {'dataset_name': dataset_name, 'cols': [ {'columnid':col, 'last_updt_dt_data': last_updt_views} for col in column_names]}
     return {}
