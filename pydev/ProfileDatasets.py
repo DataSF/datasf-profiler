@@ -75,40 +75,42 @@ class ProfileDatasets:
       #print view_info
     #print 
     #print view_info
-    if 'metadata' in view_info.keys():
-      if('geo' in view_info['metadata']):
-        last_updt_views = ProfileDatasets.getMostRecentGeoUpdateDate(view_info)
-        try:
-          last_updt_views =  datetime.datetime.strptime(last_updt_views, "%Y-%m-%dT%H:%M:%S")
-          columns = ProfileDatasets.getInfoFromGeoView( view_info, 'columns')
-        except Exception, e:
-          print str(e)
-          print "*** ERROR***** "
-          print dataset_name
-          print qry
-          print "************"
-      else:
-        last_updt_views = view_info['rowsUpdatedAt']
-        last_updt_views = datetime.datetime.utcfromtimestamp(last_updt_views)
-        columns = view_info['columns']
-      column_names = [ datesetid + "_" + col['fieldName'] for col in columns ]
-      last_updt_dp =  datetime.datetime.strptime(last_updt_dp, "%Y-%m-%dT%H:%M:%S")
-      #last_updt_dp_plus = last_updt_dp + datetime.timedelta(hours=0)
-      if privateordeleted:
-        print "**** deleted dataset*****"
+    #if 'metadata' in view_info.keys():
+    if('geo' in view_info['metadata']):
+        #last_updt_views = ProfileDatasets.getMostRecentGeoUpdateDate(view_info)
+      last_update_views = getLastUpdatedFromViews(view_info)
+      try:
+        #last_updt_views =  datetime.datetime.strptime(last_updt_views, "%Y-%m-%dT%H:%M:%S")
+        columns = ProfileDatasets.getInfoFromGeoView( view_info, 'columns')
+      except Exception, e:
+        print str(e)
+        print "*** ERROR***** "
         print dataset_name
-        return {'dataset_name': dataset_name, 'cols': [ {'columnid':col, 'privateordeleted': True} for col in column_names]}
-        print
-      if last_updt_views > last_updt_dp:
-        print "***timestamps**:" +dataset_name  + " " + datesetid
-        print "***last_uptdt"
-        print last_updt_dp
-        print
-        print "**views"
-        print last_updt_views
-        print "*****"
-        last_updt_views = last_updt_views.strftime('%Y-%m-%dT%H:%M:%S')
-        return {'dataset_name': dataset_name, 'cols': [ {'columnid':col, 'last_updt_dt_data': last_updt_views} for col in column_names]}
+        print qry
+        print "************"
+    else:
+        #last_updt_views = view_info['rowsUpdatedAt']
+        last_updt_views = getLastUpdatedFromViews(view_info)
+        #last_updt_views = datetime.datetime.utcfromtimestamp(last_updt_views)
+        columns = view_info['columns']
+    column_names = [ datesetid + "_" + col['fieldName'] for col in columns ]
+    last_updt_dp =  datetime.datetime.strptime(last_updt_dp, "%Y-%m-%dT%H:%M:%S")
+    #last_updt_dp_plus = last_updt_dp + datetime.timedelta(hours=0)
+    if privateordeleted:
+      print "**** deleted dataset*****"
+      print dataset_name
+      return {'dataset_name': dataset_name, 'cols': [ {'columnid':col, 'privateordeleted': True} for col in column_names]}
+      print
+    if last_updt_views > last_updt_dp:
+      print "***timestamps**:" +dataset_name  + " " + datesetid
+      print "***last_uptdt"
+      print last_updt_dp
+      print
+      print "**views"
+      print last_updt_views
+      print "*****"
+      last_updt_views = last_updt_views.strftime('%Y-%m-%dT%H:%M:%S')
+      return {'dataset_name': dataset_name, 'cols': [ {'columnid':col, 'last_updt_dt_data': last_updt_views} for col in column_names]}
     return {}
 
 
@@ -217,17 +219,17 @@ class ProfileDatasets:
       rowsUpdatedAt = ProfileDatasets.getMostRecentGeoUpdateDate(json)
       print rowsUpdatedAt
       rowsUpdatedAt = datetime.datetime.utcfromtimestamp(rowsUpdatedAt)
-      rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
+      #rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
       return rowsUpdatedAt
     elif ('rowsUpdatedAt' in json.keys()):
         print "None geodataset"
         print json['rowsUpdatedAt']
         rowsUpdatedAt = datetime.datetime.utcfromtimestamp(json['rowsUpdatedAt'])
-        rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
+        #rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
         return rowsUpdatedAt
     elif ('createdAt' in json.keys() and 'rowsUpdatedAt' not in json.keys()):
         rowsUpdatedAt = datetime.datetime.utcfromtimestamp(json['createdAt'])
-        rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
+        # rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
     return rowsUpdatedAt
 
   @staticmethod
