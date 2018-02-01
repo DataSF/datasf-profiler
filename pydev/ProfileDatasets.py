@@ -63,14 +63,18 @@ class ProfileDatasets:
       elif view_info['code'] == 'not_found':
         print "*** Dataset not found ****"
         return {}
+    print 
+    print "VIEW INFO"
+    print view_info
+    print 
     try:
       dataset_name =  view_info['name']
     except Exception, e:
       print "ERROR something went wrong"
       print str(e)
-      print view_info
-    print 
-    print view_info
+      #print view_info
+    #print 
+    #print view_info
     if 'metadata' in view_info.keys():
       if('geo' in view_info['metadata']):
         last_updt_views = ProfileDatasets.getMostRecentGeoUpdateDate(view_info)
@@ -83,28 +87,28 @@ class ProfileDatasets:
           print dataset_name
           print qry
           print "************"
-    else:
-      last_updt_views = view_info['rowsUpdatedAt']
-      last_updt_views = datetime.datetime.utcfromtimestamp(last_updt_views)
-      columns = view_info['columns']
-    column_names = [ datesetid + "_" + col['fieldName'] for col in columns ]
-    last_updt_dp =  datetime.datetime.strptime(last_updt_dp, "%Y-%m-%dT%H:%M:%S")
-    #last_updt_dp_plus = last_updt_dp + datetime.timedelta(hours=0)
-    if privateordeleted:
-      print "**** deleted dataset*****"
-      print dataset_name
-      return {'dataset_name': dataset_name, 'cols': [ {'columnid':col, 'privateordeleted': True} for col in column_names]}
-      print
-    if last_updt_views > last_updt_dp:
-      print "***timestamps**:" +dataset_name  + " " + datesetid
-      print "***last_uptdt"
-      print last_updt_dp
-      print
-      print "**views"
-      print last_updt_views
-      print "*****"
-      last_updt_views = last_updt_views.strftime('%Y-%m-%dT%H:%M:%S')
-      return {'dataset_name': dataset_name, 'cols': [ {'columnid':col, 'last_updt_dt_data': last_updt_views} for col in column_names]}
+      else:
+        last_updt_views = view_info['rowsUpdatedAt']
+        last_updt_views = datetime.datetime.utcfromtimestamp(last_updt_views)
+        columns = view_info['columns']
+      column_names = [ datesetid + "_" + col['fieldName'] for col in columns ]
+      last_updt_dp =  datetime.datetime.strptime(last_updt_dp, "%Y-%m-%dT%H:%M:%S")
+      #last_updt_dp_plus = last_updt_dp + datetime.timedelta(hours=0)
+      if privateordeleted:
+        print "**** deleted dataset*****"
+        print dataset_name
+        return {'dataset_name': dataset_name, 'cols': [ {'columnid':col, 'privateordeleted': True} for col in column_names]}
+        print
+      if last_updt_views > last_updt_dp:
+        print "***timestamps**:" +dataset_name  + " " + datesetid
+        print "***last_uptdt"
+        print last_updt_dp
+        print
+        print "**views"
+        print last_updt_views
+        print "*****"
+        last_updt_views = last_updt_views.strftime('%Y-%m-%dT%H:%M:%S')
+        return {'dataset_name': dataset_name, 'cols': [ {'columnid':col, 'last_updt_dt_data': last_updt_views} for col in column_names]}
     return {}
 
 
