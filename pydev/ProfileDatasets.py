@@ -215,11 +215,18 @@ class ProfileDatasets:
     if('geo' in json['metadata']):
       print "***** this is a geo dataset******"
       rowsUpdatedAt = ProfileDatasets.getMostRecentGeoUpdateDate(json)
+      print rowsUpdatedAt
       rowsUpdatedAt = datetime.datetime.utcfromtimestamp(rowsUpdatedAt)
       rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
-    else:
-      if ('rowsUpdatedAt' in json.keys()):
+      return rowsUpdatedAt
+    else if ('rowsUpdatedAt' in json.keys()):
+        print "None geodataset"
+        print json['rowsUpdatedAt']
         rowsUpdatedAt = datetime.datetime.utcfromtimestamp(json['rowsUpdatedAt'])
+        rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
+        return rowsUpdatedAt
+    else if ('createdAt' in json.keys() and 'rowsUpdatedAt' not in json.keys())
+        rowsUpdatedAt = datetime.datetime.utcfromtimestamp(json['createdAt'])
         rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
     return rowsUpdatedAt
 

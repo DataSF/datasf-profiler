@@ -94,6 +94,7 @@ def main():
   #  print "****hourly update****"
   for datasetid,last_updt in ds_profiles.iteritems():
     mm_profiles_to_updt =  ProfileDatasets.getViewsLastUpdatedAt(datasetid,last_updt, clientItems)
+    print datasetid
     #print mm_profiles_to_updt
     if('cols' in mm_profiles_to_updt.keys()):
       dataset_info_mm = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': mmdd_fbf, 'row_id': 'columnid'}
