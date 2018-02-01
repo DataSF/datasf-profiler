@@ -78,7 +78,7 @@ class ProfileDatasets:
     #if 'metadata' in view_info.keys():
     if('geo' in view_info['metadata']):
         #last_updt_views = ProfileDatasets.getMostRecentGeoUpdateDate(view_info)
-      last_update_views = getLastUpdatedFromViews(view_info)
+      last_update_views = ProfileDatasets.getLastUpdatedFromViews(view_info)
       try:
         #last_updt_views =  datetime.datetime.strptime(last_updt_views, "%Y-%m-%dT%H:%M:%S")
         columns = ProfileDatasets.getInfoFromGeoView( view_info, 'columns')
@@ -90,7 +90,7 @@ class ProfileDatasets:
         print "************"
     else:
         #last_updt_views = view_info['rowsUpdatedAt']
-        last_updt_views = getLastUpdatedFromViews(view_info)
+        last_updt_views = ProfileDatasets.getLastUpdatedFromViews(view_info)
         #last_updt_views = datetime.datetime.utcfromtimestamp(last_updt_views)
         columns = view_info['columns']
     column_names = [ datesetid + "_" + col['fieldName'] for col in columns ]
