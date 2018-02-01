@@ -66,8 +66,11 @@ class ProfileDatasets:
     try:
       dataset_name =  view_info['name']
     except Exception, e:
+      print "ERROR something went wrong"
       print str(e)
       print view_info
+    print 
+    print view_info
     if('geo' in view_info['metadata']):
       last_updt_views = ProfileDatasets.getMostRecentGeoUpdateDate(view_info)
       try:
