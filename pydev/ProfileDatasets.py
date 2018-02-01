@@ -196,6 +196,7 @@ class ProfileDatasets:
 
   @staticmethod
   def getMostRecentGeoUpdateDate(json):
+    rowsUpdatedAtUTC = None
     if 'layers' in json['metadata']['geo']:
       rowsUpdatedAtUTC = ProfileDatasets.getInfoFromGeoView(json, 'rowsUpdatedAt')
     if(rowsUpdatedAtUTC is None):
@@ -203,7 +204,7 @@ class ProfileDatasets:
     if rowsUpdatedAtUTC:
       #rowsUpdatedAt = datetime.datetime.utcfromtimestamp(rowsUpdatedAtUTC)
       #rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
-      return rowsUpdatedAt
+      return rowsUpdatedAtUTC
     return ''
 
 
