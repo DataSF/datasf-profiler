@@ -225,7 +225,7 @@ class ProfileDatasets:
         rowsUpdatedAt = datetime.datetime.utcfromtimestamp(json['rowsUpdatedAt'])
         rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
         return rowsUpdatedAt
-    elif ('createdAt' in json.keys() and 'rowsUpdatedAt' not in json.keys())
+    elif ('createdAt' in json.keys() and 'rowsUpdatedAt' not in json.keys()):
         rowsUpdatedAt = datetime.datetime.utcfromtimestamp(json['createdAt'])
         rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
     return rowsUpdatedAt
