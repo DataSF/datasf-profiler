@@ -201,8 +201,8 @@ class ProfileDatasets:
     if(rowsUpdatedAtUTC is None):
       rowsUpdatedAtUTC = ProfileDatasets.getInfoFromGeoView(json, 'viewLastModified')
     if rowsUpdatedAtUTC:
-      rowsUpdatedAt = datetime.datetime.utcfromtimestamp(rowsUpdatedAtUTC)
-      rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
+      #rowsUpdatedAt = datetime.datetime.utcfromtimestamp(rowsUpdatedAtUTC)
+      #rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
       return rowsUpdatedAt
     return ''
 
@@ -213,7 +213,9 @@ class ProfileDatasets:
     rowsUpdatedAt = ''
     if('geo' in json['metadata']):
       print "***** this is a geo dataset******"
-      return ProfileDatasets.getMostRecentGeoUpdateDate(json)
+      rowsUpdatedAt = ProfileDatasets.getMostRecentGeoUpdateDate(json)
+      rowsUpdatedAt = datetime.datetime.utcfromtimestamp(rowsUpdatedAt)
+      rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
     else:
       if ('rowsUpdatedAt' in json.keys()):
         rowsUpdatedAt = datetime.datetime.utcfromtimestamp(json['rowsUpdatedAt'])
