@@ -58,19 +58,19 @@ class ProfileDatasets:
         print r.json()
         print
         view_info = r.json()
-        print view_info
-        print "*** private or deleted**"
+        #print view_info
+        #print "*** private or deleted**"
       elif view_info['code'] == 'not_found':
         print "*** Dataset not found ****"
         return {}
     print 
-    print "VIEW INFO"
-    print view_info
-    print 
+    ##print "VIEW INFO"
+    ##print view_info
+    #print 
     try:
       dataset_name =  view_info['name']
     except Exception, e:
-      print "ERROR something went wrong"
+      print "ERROR something went wrong- coult not find dataset name"
       print str(e)
       #print view_info
     #print 

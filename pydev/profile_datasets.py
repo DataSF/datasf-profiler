@@ -99,16 +99,15 @@ def main():
       dataset_info_mm = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': mmdd_fbf, 'row_id': 'columnid'}
       dataset_info_mm['DatasetRecordsCnt'] = 0
       dataset_info_mm['SrcRecordsCnt'] = len(mm_profiles_to_updt['cols'])
+
+      print "***************"
+      print "Updating " + mm_profiles_to_updt['name']
+      print "*************"
+      print "**************"
+
       dataset_info_mm = scrud.postDataToSocrata(dataset_info_mm, mm_profiles_to_updt['cols'])
       update_counter = update_counter + 1
       updated_datasets.append(mm_profiles_to_updt['dataset_name'])
-
-    print "***************"
-    print "Updating " + str(update_counter) + " dataset profiles....."
-    print
-    print ",".join(updated_datasets)
-    print "*************"
-    print "**************"
 
   datasets = ProfileDatasets.getBaseDatasets(sQobj, base_url,  mmdd_fbf)
   asset_inventory_dict = ProfileDatasets.getAssetInventoryInfo(sQobj, base_url,  asset_inventory_fbf)
