@@ -270,7 +270,7 @@ class ProfileDatasets:
     rowLabel = ProfileDatasets.getRowLabel(json)
     rowIdentifier = ProfileDatasets.getRowIdentifier(json)
     rowsUpdatedAt = ProfileDatasets.getLastUpdatedFromViews(json)
-    return { 'rowLabel': rowLabel, 'rowIdentifier': rowIdentifier, 'last_updt_dt_data': rowsUpdatedAt}
+    return { 'rowLabel': rowLabel, 'rowIdentifier': rowIdentifier, 'last_updt_dt_data': rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')}
 
 
   @staticmethod
