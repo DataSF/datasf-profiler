@@ -3,10 +3,15 @@
 #dir configs
 pickle_dir: /home/ubuntu/datasf-profiler/pickled/
 log_dir: /home/ubuntu/datasf-profiler/logs/
+#log_dir: /Users/j9/Desktop/work/datasf-profiler/logs/
 config_dir: /home/ubuntu/datasf-profiler/configs/
+#config_dir: /Users/j9/Desktop/work/datasf-profiler/configs/
+
 pickle_data_dir: /home/ubuntu/datasf-profiler/pickled/datasets/
 wkbk_uploads_dir: /home/ubuntu/datasf-profiler/wkbk_uploads/
-inputConfigDir: /home/ubuntu/datasf-profiler/configs/
+#inputConfigDir: /Users/j9/Desktop/work/datasf-profiler/configs/
+
+inputConfigDir: /home/ubuntu/datasf-profiler//datasf-profiler/configs/
 
 mm_dd_json_fn: master_dd_fields.json
 
