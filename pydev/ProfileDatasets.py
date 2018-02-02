@@ -21,7 +21,7 @@ class ProfileDatasets:
 
   @staticmethod
   def getAssetInventoryInfo(sQobj, base_url, fbf):
-    print 
+    print
     '''returns a nested dict obj of all the datasetids as keys from the asset inventory; values dicts of pertinent asset inventory info'''
     qryCols = '''u_id as datasetid, category, downloads, publishing_frequency, data_change_frequency, visits, description, data_notes as notes, name as dataset_name, keywords WHERE public = 'true' '''
     results =  sQobj.pageThroughResultsSelect(fbf, qryCols)
@@ -39,8 +39,9 @@ class ProfileDatasets:
   def getViewsLastUpdatedAt( datesetid,last_updt_dp, clientItems):
     privateordeleted = False
     columns = []
+    last_updt_views = None
     qry = '''https://data.sfgov.org/api/views/%s.json''' %(datesetid)
-    try: 
+    try:
       r = requests.get( qry )
       view_info =  r.json()
     except Exception, e:
@@ -50,38 +51,39 @@ class ProfileDatasets:
     #print view_info
     if 'code' in view_info.keys() and 'message' in view_info.keys():
       print "*** error message "
-      if view_info['code'] == 'authentication_required':
+      if (view_info['code'] == 'authentication_required') :
         privateordeleted = True
         print "****get view info private***"
         r = requests.get( qry, auth=(clientItems['username'], base64.b64decode(clientItems['password'])))
-        print "*******"
-        print r.json()
-        print
+        print qry
         view_info = r.json()
-        #print view_info
+        print view_info
+        if 'code' in view_info.keys() and 'message' in view_info.keys():
+          print "***PERMS DENIED:"
+          print qry
+          return {}
         #print "*** private or deleted**"
       elif view_info['code'] == 'not_found':
         print "*** Dataset not found ****"
         return {}
-    print 
-    ##print "VIEW INFO"
-    ##print view_info
-    #print 
+    #print
     try:
       dataset_name =  view_info['name']
     except Exception, e:
+      print view_info
       print "ERROR something went wrong- coult not find dataset name"
       print str(e)
       #print view_info
-    #print 
+    #print
     #print view_info
     #if 'metadata' in view_info.keys():
     if('geo' in view_info['metadata']):
-        #last_updt_views = ProfileDatasets.getMostRecentGeoUpdateDate(view_info)
-      last_update_views = ProfileDatasets.getLastUpdatedFromViews(view_info)
+      #print "this is a geo"
+      #last_updt_views = ProfileDatasets.getMostRecentGeoUpdateDate(view_info)
       try:
         #last_updt_views =  datetime.datetime.strptime(last_updt_views, "%Y-%m-%dT%H:%M:%S")
-        columns = ProfileDatasets.getInfoFromGeoView( view_info, 'columns')
+        last_updt_views = ProfileDatasets.getMostRecentGeoUpdateDate(view_info, clientItems)
+        columns = ProfileDatasets.getInfoFromGeoView( view_info, 'columns', clientItems)
       except Exception, e:
         print str(e)
         print "*** ERROR***** "
@@ -89,9 +91,7 @@ class ProfileDatasets:
         print qry
         print "************"
     else:
-        #last_updt_views = view_info['rowsUpdatedAt']
         last_updt_views = ProfileDatasets.getLastUpdatedFromViews(view_info)
-        #last_updt_views = datetime.datetime.utcfromtimestamp(last_updt_views)
         columns = view_info['columns']
     column_names = [ datesetid + "_" + col['fieldName'] for col in columns ]
     last_updt_dp =  datetime.datetime.strptime(last_updt_dp, "%Y-%m-%dT%H:%M:%S")
@@ -180,50 +180,65 @@ class ProfileDatasets:
     return None
 
   @staticmethod
-  def getInfoFromGeoView(json, key):
+  def getInfoFromGeoView(json, key, clientItems):
     if 'layers' in json['metadata']['geo']:
       geoFbf =  json['metadata']['geo']['layers']
       geoFbf = geoFbf.split(",")
       #print geoFbf
       qry = '''https://data.sfgov.org/api/views/%s.json''' %(geoFbf[0])
+      #print qry
       r = requests.get( qry )
       try:
         view_info =  r.json()
         if key in view_info.keys():
           return view_info[key]
+        elif 'code' in view_info.keys() and 'message' in view_info.keys():
+          print "***geo private message "
+          if view_info['code'] == 'authentication_required':
+            #privateordeleted = True
+            print "****get view info private geo***"
+            r = requests.get( qry, auth=(clientItems['username'], base64.b64decode(clientItems['password'])))
+            view_info = r.json()
+            if key in view_info.keys():
+              return view_info[key]
+          elif view_info['code'] == 'not_found':
+            print "*** Dataset not found ****"
+            return ''
+          else:
+            print "key not found"
+            return None
+        elif key not in view_info.keys():
+          print "key not found withot private"
+          return None
       except Exception, e:
-        print "ERROR: Could not decode json**"
+        print r.json()
+        print "ERROR: raised an exception**"
         print str(e)
+
     return None
 
   @staticmethod
-  def getMostRecentGeoUpdateDate(json):
+  def getMostRecentGeoUpdateDate(json, clientItems):
     rowsUpdatedAtUTC = None
+    rowsUpdatedAt = None
     if 'layers' in json['metadata']['geo']:
-      rowsUpdatedAtUTC = ProfileDatasets.getInfoFromGeoView(json, 'rowsUpdatedAt')
-    if(rowsUpdatedAtUTC is None):
-      rowsUpdatedAtUTC = ProfileDatasets.getInfoFromGeoView(json, 'viewLastModified')
-    if rowsUpdatedAtUTC:
-      #rowsUpdatedAt = datetime.datetime.utcfromtimestamp(rowsUpdatedAtUTC)
-      #rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
-      return rowsUpdatedAtUTC
-    return ''
+      rowsUpdatedAt = ProfileDatasets.getInfoFromGeoView(json, 'rowsUpdatedAt', clientItems)
+    elif 'layers' not in json['metadata']['geo']:
+      "trying again"
+      rowsUpdatedAt = ProfileDatasets.getInfoFromGeoView(json, 'viewLastModified', clientItems)
+    if (rowsUpdatedAt is None):
+      rowsUpdatedAt = ProfileDatasets.getInfoFromGeoView(json, 'viewLastModified', clientItems)
+    if not (rowsUpdatedAt is None):
+      rowsUpdatedAt = datetime.datetime.utcfromtimestamp(rowsUpdatedAt)
+    return rowsUpdatedAt
+
 
 
 
   @staticmethod
   def getLastUpdatedFromViews(json):
     rowsUpdatedAt = ''
-    if('geo' in json['metadata']):
-      print "***** this is a geo dataset******"
-      rowsUpdatedAt = ProfileDatasets.getMostRecentGeoUpdateDate(json)
-      print rowsUpdatedAt
-      rowsUpdatedAt = datetime.datetime.utcfromtimestamp(rowsUpdatedAt)
-      #rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
-      return rowsUpdatedAt
-    elif ('rowsUpdatedAt' in json.keys()):
-        print "None geodataset"
-        print json['rowsUpdatedAt']
+    if ('rowsUpdatedAt' in json.keys()):
         rowsUpdatedAt = datetime.datetime.utcfromtimestamp(json['rowsUpdatedAt'])
         #rowsUpdatedAt = rowsUpdatedAt.strftime('%Y-%m-%dT%H:%M:%S')
         return rowsUpdatedAt
@@ -327,6 +342,7 @@ class ProfileDatasets:
   @staticmethod
   def getDatasetStats(sQobj, dataset, mmdd_fbf, field_types, asset_inventory_dict):
     dataset_stats = {}
+    print dataset
     dataset_stats = ProfileDatasets.getTypeCnt(sQobj,dataset, mmdd_fbf, field_types)
     dataset_stats['dupe_record_count'] = ProfileDatasets.getDatasetDupes(sQobj,mmdd_fbf, dataset)
     dataset_stats['dupe_record_percent'] = ProfileDatasets.percentDuplicate(dataset_stats)
@@ -341,7 +357,9 @@ class ProfileDatasets:
     dataset_stats['documented_count'] = ProfileDatasets.getDocumentedFieldCnt(sQobj, dataset, mmdd_fbf)
     dataset_stats['documented_percentage'] = ProfileDatasets.getCntAsPercent(dataset_stats['field_count'], dataset_stats['documented_count'])
     rowInfo = ProfileDatasets.getRowInfo(dataset['datasetid'])
+
     dataset_stats = DictUtils.merge_two_dicts(dataset_stats,rowInfo)
+    dataset_stats['last_updt_dt_data'] = dataset['last_updt_dt_data']
     if(rowInfo['last_updt_dt_data'] != ''):
       dataset_stats['last_updt_dt_data'] =  rowInfo['last_updt_dt_data']
     dataset_stats['days_since_last_updated'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['last_updt_dt_data'], dt_fmt)
@@ -350,14 +368,16 @@ class ProfileDatasets:
     dataset_stats = DictUtils.filterDictOnNans(dataset_stats)
     dataset_stats['publishing_health'] =  ProfileDatasets.calculatePublishingHealth(dataset_stats)
     dataset_stats['profile_last_updt_dt'] = DateUtils.get_current_timestamp()
+    #dataset_stats['last_updt_dt_data'] = dataset['last_updt_dt_data'] #.strftime('%Y-%m-%dT%H:%M:%S')
     if('description' not in dataset_stats.keys() ):
       dataset_stats['description'] = "Description not availible."
+    #print dataset_stats
     return  dataset_stats
 
 
   @staticmethod
   def getDatasetHealthForAll(sQobj, dataset, mmdd_fbf, field_types, asset_inventory_dict):
-    dataset_stats = {}
+    dataset_stats = dataset
     dt_fmt = '%Y-%m-%dT%H:%M:%S'
     auxInfo = ProfileDatasets.joinAuxDataSetInfo(dataset_stats, asset_inventory_dict)
     if len(auxInfo.keys()) > 0:
@@ -464,6 +484,7 @@ class ProfileDatasets:
     for chunk in datasets_chunks:
       datasets_stats = []
       for dataset in chunk:
+        print dataset['datasetid']
         #dataset_stats = {}
         if dataset['datasetid'] in ds_profile_keys:
             #print DateUtils.compare_two_timestamps( ds_profiles[dataset['datasetid']],  dataset['last_updt_dt_data'], dt_fmt , dt_fmt, offset_t1=0, offset_t2=0 )
@@ -472,6 +493,7 @@ class ProfileDatasets:
               dataset_stats = ProfileDatasets.getDatasetStats(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
               datasets_stats.append(dataset_stats)
             else:
+              #print "checking dataset health"
               dataset_stats = ProfileDatasets.getDatasetHealthForAll(sQobj,dataset, mmdd_fbf, field_types, asset_inventory_dict)
               datasets_stats.append(dataset_stats)
         else:

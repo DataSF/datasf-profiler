@@ -7,7 +7,7 @@ from ConfigUtils import *
 from SocrataStuff import *
 from PandasUtils import *
 from PyLogger import *
-from Queries import *
+#from Queries import *
 from Utils import *
 from JobStatusEmailerComposer import *
 from ProfileDatasets import *
@@ -94,15 +94,15 @@ def main():
   #  print "****hourly update****"
   for datasetid,last_updt in ds_profiles.iteritems():
     mm_profiles_to_updt =  ProfileDatasets.getViewsLastUpdatedAt(datasetid,last_updt, clientItems)
-    print datasetid
+    #print datasetid
     #print mm_profiles_to_updt
     if('cols' in mm_profiles_to_updt.keys()):
       dataset_info_mm = {'Socrata Dataset Name': configItems['dataset_name'], 'SrcRecordsCnt':0, 'DatasetRecordsCnt':0, 'fourXFour': mmdd_fbf, 'row_id': 'columnid'}
       dataset_info_mm['DatasetRecordsCnt'] = 0
       dataset_info_mm['SrcRecordsCnt'] = len(mm_profiles_to_updt['cols'])
-
+      #print mm_profiles_to_updt.keys()
       print "***************"
-      print "Updating " + mm_profiles_to_updt['name']
+      print "Updating " + mm_profiles_to_updt['dataset_name']
       print "*************"
       print "**************"
 
