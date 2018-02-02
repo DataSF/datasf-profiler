@@ -360,7 +360,7 @@ class ProfileDatasets:
 
     dataset_stats = DictUtils.merge_two_dicts(dataset_stats,rowInfo)
     dataset_stats['last_updt_dt_data'] = dataset['last_updt_dt_data']
-    if(rowInfo['last_updt_dt_data'] != ''):
+    if(rowInfo['last_updt_dt_data'] == ''):
       dataset_stats['last_updt_dt_data'] =  rowInfo['last_updt_dt_data']
     dataset_stats['days_since_last_updated'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['last_updt_dt_data'], dt_fmt)
     dataset_stats['days_since_first_created'] = ProfileDatasets.getNumberOfDaysSinceSomeEvent(dataset['created_date'], dt_fmt)
